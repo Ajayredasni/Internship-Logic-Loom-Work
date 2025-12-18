@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Home, LogOut, Menu, X, Bell } from "react-feather";
 import { logout, selectUser, selectIsAuthenticated } from "./store/authSlice";
+import { formDataAction } from "./store/formDataStoreSlice";
+import { formMenuAction } from "./store/formMenuStoreSlice";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "./custom_component/CustomButton";
 
@@ -15,7 +17,6 @@ function Navbar({ activeItem, setActiveItem }) {
   const [isOpen, setIsOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  // const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
   // Load notifications on mount
   useEffect(() => {
@@ -61,9 +62,12 @@ function Navbar({ activeItem, setActiveItem }) {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  //  Redux Logout Handler
   const handleLogout = () => {
+    console.log(`🔓 Logging out user: ${currentUser?.email}`);
+    dispatch(formDataAction.clearFormData());
+    dispatch(formMenuAction.clearFormMenuData());
     dispatch(logout());
+    // localStorage.setItem("users", JSON.stringify([]));   // delete all user in the regeistered
     navigate("/");
   };
 
@@ -416,6 +420,7 @@ function Navbar({ activeItem, setActiveItem }) {
               >
                 {currentUser.firstName?.charAt(0)}
                 {currentUser.lastName?.charAt(0)}
+                {console.log(currentUser.firstName, currentUser.lastName)}
               </div>
               <div>
                 <div

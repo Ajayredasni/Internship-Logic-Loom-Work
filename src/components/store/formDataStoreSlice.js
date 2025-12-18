@@ -1,4 +1,4 @@
-// store/formDataStoreSlice.js
+// src/components/store/formDataStoreSlice.js - UPDATED
 import { createSlice } from "@reduxjs/toolkit";
 import { loadFromLocalStorage, saveToLocalStorage } from "./FormData";
 
@@ -10,6 +10,7 @@ const normalizeRules = (rules = []) =>
       rule.regex instanceof RegExp ? rule.regex.source : String(rule.regex),
   }));
 
+//  Initial data - user specific
 const initialData = loadFromLocalStorage();
 
 const formDataStoreSlice = createSlice({
@@ -18,6 +19,7 @@ const formDataStoreSlice = createSlice({
     formDataStore: initialData,
   },
   reducers: {
+    //  Add Form
     addForm: (state, action) => {
       const newForm = {
         ...action.payload,
@@ -27,16 +29,18 @@ const formDataStoreSlice = createSlice({
         })),
       };
       state.formDataStore.push(newForm);
-      saveToLocalStorage(state.formDataStore); // localStorage update
+      saveToLocalStorage(state.formDataStore);
     },
 
+    //  Delete Form
     deleteForm: (state, action) => {
       state.formDataStore = state.formDataStore.filter(
         (form) => form.formId !== action.payload.formId
       );
-      saveToLocalStorage(state.formDataStore); // localStorage update
+      saveToLocalStorage(state.formDataStore);
     },
 
+    //  Update Form
     updateForm: (state, action) => {
       const updatedForm = action.payload;
       const index = state.formDataStore.findIndex(
@@ -44,8 +48,18 @@ const formDataStoreSlice = createSlice({
       );
       if (index !== -1) {
         state.formDataStore[index] = updatedForm;
-        saveToLocalStorage(state.formDataStore); // localStorage update
+        saveToLocalStorage(state.formDataStore);
       }
+    },
+
+    //  NEW: Load user-specific data (called on login)
+    loadUserData: (state, action) => {
+      state.formDataStore = action.payload || [];
+    },
+
+    //  NEW: Clear data (called on logout)
+    clearFormData: (state) => {
+      state.formDataStore = [];
     },
   },
 });
