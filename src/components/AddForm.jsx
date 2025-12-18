@@ -1,8 +1,17 @@
+// src/components/AddForm.jsx - Complete with Stepper
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { formDataAction } from "./store/FormDataStoreSlice";
 import FormFieldData from "./store/FormFieldData";
 import { v4 as uuidv4 } from "uuid";
+import { useNavigate, useLocation } from "react-router-dom";
+import Stepper from "./custom_component/Stepper"; //
+import CustomAlert from "./custom_component/CustomAlert";
+import CustomButton from "./custom_component/CustomButton";
+import CustomCard from "./custom_component/CustomCard";
+import CustomSelect from "./custom_component/CustomSelect";
+import CustomModal from "./custom_component/CustomModal";
+import "./AddForm.css";
 
 import {
   XCircle,
@@ -13,32 +22,33 @@ import {
   X,
   Edit,
   Check,
+  ArrowLeft,
+  ArrowRight,
 } from "react-feather";
-import { useNavigate, useLocation } from "react-router-dom";
-import "./AddForm.css";
 
 // Import icons for the basic components
 import {
-  Type, // Text Field
-  Key, // Password
-  Hash, // Number
-  FileText, // Text Area
-  List, // Select
-  Circle, // Radio
-  CheckSquare, // Checkbox
-  Calendar, // Date
-  Clock, // Time
-  Watch, // Custom Time
-  File, // File
-  Grid, // List
+  Type,
+  Key,
+  Hash,
+  FileText,
+  List,
+  Circle,
+  CheckSquare,
+  Calendar,
+  Clock,
+  Watch,
+  File,
+  Grid,
+  Eye,
 } from "react-feather";
-// import { formMenuAction } from "./store/FormMenuStoreSlice";
 
 const AddForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { formDataStore } = useSelector((store) => store.formDataStore);
+
   const [formDetails, setFormDetails] = useState({
     organizationName: "",
     formName: "",
@@ -47,7 +57,6 @@ const AddForm = () => {
     isMainForm: true,
     mainFormName: null,
     active: true,
-    // sub_forms: [],
     form: [],
   });
 
@@ -75,13 +84,11 @@ const AddForm = () => {
     value: "",
     errorMsg: "",
   });
-  const [editingRuleIndex, setEditingRuleIndex] = useState(-1); // -1 means no edit in progress
+  const [editingRuleIndex, setEditingRuleIndex] = useState(-1);
   const [editRuleTemp, setEditRuleTemp] = useState({ value: "", errorMsg: "" });
   const [editingFieldIndex, setEditingFieldIndex] = useState(-1);
   const [errors, setErrors] = useState({});
   const [ruleErrors, setRuleErrors] = useState({});
-  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  const [formTypeDropdownOpen, setFormTypeDropdownOpen] = useState(false);
   const [organizations] = useState([
     "My Organization",
     "ABC Pvt Ltd",
@@ -90,7 +97,44 @@ const AddForm = () => {
     "Tech pvt Ltd",
   ]);
   const [formTypes] = useState(["Main Form", "Sub Form", "Row Form"]);
-  // filter the Main Form type to Main Form Name List
+
+  const [alert, setAlert] = useState({
+    show: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  // ✨ STEPPER STATE
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // ✨ STEPPER STEPS DEFINITION
+  const steps = [
+    {
+      label: "Form Details",
+      icon: <FileText size={20} />,
+      description: "Basic information",
+    },
+    {
+      label: "Add Fields",
+      icon: <Grid size={20} />,
+      description: "Configure form fields",
+    },
+    {
+      label: "Review",
+      icon: <Eye size={20} />,
+      description: "Preview & save",
+    },
+  ];
+
+  const showAlert = (type, title, message) => {
+    setAlert({ show: true, type, title, message });
+  };
+
+  const closeAlert = () => {
+    setAlert({ ...alert, show: false });
+  };
+
   const mainFormsNameList = formDataStore.filter(
     (f) => f.formType === "Main Form"
   );
@@ -202,7 +246,6 @@ const AddForm = () => {
   };
 
   // Data tab option code
-
   const deleteOption = (idx) => {
     const updatedOptions = [...fieldConfig.options];
     updatedOptions.splice(idx, 1);
@@ -420,6 +463,11 @@ const AddForm = () => {
         ...formDetails,
         form: updatedForm,
       });
+      showAlert(
+        "success",
+        "Field Updated!",
+        "Field has been updated successfully!"
+      );
     } else {
       // Adding new field — give it a unique id
       const newField = {
@@ -430,6 +478,11 @@ const AddForm = () => {
         ...prev,
         form: [...prev.form, newField],
       }));
+      showAlert(
+        "success",
+        "Field Added!",
+        "Field has been added successfully!"
+      );
     }
 
     // 5. Reset modal state & errors
@@ -513,80 +566,98 @@ const AddForm = () => {
     return true;
   };
 
-  const validateForm = () => {
+  // ✨ STEP VALIDATION
+  const validateStep = (step) => {
     let newErrors = {};
-    if (!formDetails.organizationName)
-      newErrors.organizationName = "Organization name is required";
-    if (!formDetails.formName) newErrors.formName = "Form name is required";
-    if (!formDetails.formType) newErrors.formType = "Form type is required";
 
-    if (formDetails.formType === "Sub Form" && formDetails.isMainForm) {
-      newErrors.isMainForm =
-        "Sub Form must have 'Main Form No' selected (not a main form)";
-    } else if (
-      formDetails.formType === "Main Form" &&
-      !formDetails.isMainForm
-    ) {
-      newErrors.isMainForm = "Main Form must be marked as Main Form";
-    }
+    if (step === 0) {
+      // Step 0: Form Details validation
+      if (!formDetails.organizationName)
+        newErrors.organizationName = "Organization name is required";
+      if (!formDetails.formName) newErrors.formName = "Form name is required";
+      if (!formDetails.formType) newErrors.formType = "Form type is required";
+      if (!formDetails.description)
+        newErrors.description = "Description is required";
 
-    if (!formDetails.isMainForm && !formDetails.mainFormName) {
-      newErrors.mainFormName = "Main Form Name is required";
+      if (formDetails.formType === "Sub Form" && formDetails.isMainForm) {
+        newErrors.isMainForm =
+          "Sub Form must have 'Main Form No' selected (not a main form)";
+      } else if (
+        formDetails.formType === "Main Form" &&
+        !formDetails.isMainForm
+      ) {
+        newErrors.isMainForm = "Main Form must be marked as Main Form";
+      }
+
+      if (!formDetails.isMainForm && !formDetails.mainFormName) {
+        newErrors.mainFormName = "Main Form Name is required";
+      }
+    } else if (step === 1) {
+      // Step 1: Fields validation
+      if (formDetails.form.length === 0) {
+        newErrors.form = "At least one field must be added";
+      }
     }
-    if (!formDetails.description)
-      newErrors.description = "Description is required";
-    if (formDetails.form.length === 0)
-      newErrors.form = "At least one field must be added";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✨ HANDLE NEXT STEP
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else {
+      showAlert("error", "Validation Error", "Please fill all required fields");
+    }
+  };
+
+  // ✨ HANDLE PREVIOUS STEP
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // ✨ HANDLE STEP CLICK
+  const handleStepClick = (step) => {
+    if (step < currentStep) {
+      setCurrentStep(step);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const handleFormSave = () => {
-    if (!validateForm()) return;
+    // Validate all steps
+    if (!validateStep(0) || !validateStep(1)) {
+      showAlert("error", "Validation Error", "Please complete all steps");
+      return;
+    }
 
     if (location.state?.formData) {
-      // Edit existing form
       const updatedForm = {
         ...formDetails,
-        updatedAt: new Date().toISOString(), // only update timestamp
+        updatedAt: new Date().toISOString(),
       };
       dispatch(formDataAction.updateForm(updatedForm));
+      showAlert("success", "Updated!", "Form has been updated successfully!");
     } else {
-      // Add new form
       const newForm = {
         ...formDetails,
-        formId: uuidv4(), // unique id for new form
+        formId: uuidv4(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       dispatch(formDataAction.addForm(newForm));
+      showAlert("success", "Created!", "Form has been created successfully!");
     }
 
     console.log(formDetails);
-    navigate("/app");
-  };
-
-  const selectOrganization = (org) => {
-    setFormDetails({ ...formDetails, organizationName: org });
-    setOrgDropdownOpen(false);
-
-    // Clear the validation error when a value is selected
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      organizationName: "", // clear just this field's error
-    }));
-  };
-
-  const selectFormType = (type) => {
-    setFormDetails({ ...formDetails, formType: type });
-    setFormTypeDropdownOpen(false);
-
-    // Clear the validation error for formType
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      formType: "", // clear just this field's error
-    }));
+    setTimeout(() => navigate("/app"), 1500);
   };
 
   // Toggle button component
@@ -602,60 +673,48 @@ const AddForm = () => {
     </div>
   );
 
-  return (
-    <>
-      <div className="addform-container">
-        <div className="addform-card">
-          <h3 className="addform-title">Create Form</h3>
-
+  // ✨ RENDER STEP CONTENT
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        // Step 0: Form Details
+        return (
           <div className="addform-section">
             <div className="form-grid">
               <div className="form-group">
-                <label>Organization Name *</label>
-                <div className="custom-select">
-                  <div
-                    className="select-header"
-                    onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-                  >
-                    <span
-                      className={
-                        formDetails.organizationName ? "" : "placeholder-text"
-                      }
-                    >
-                      {formDetails.organizationName || "Select Organization"}
-                    </span>
-                    {orgDropdownOpen ? (
-                      <ChevronUp size={18} />
-                    ) : (
-                      <ChevronDown size={18} />
-                    )}
-                  </div>
-                  {orgDropdownOpen && (
-                    <div className="select-dropdown">
-                      {organizations.map((org, index) => (
-                        <div
-                          key={index}
-                          className="select-option"
-                          onClick={() => selectOrganization(org)}
-                        >
-                          {org}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {errors.organizationName && (
-                  <small className="error-text">
-                    {errors.organizationName}
-                  </small>
-                )}
+                <CustomSelect
+                  label="Organization Name"
+                  name="organizationName"
+                  options={organizations.map((org) => ({
+                    value: org,
+                    label: org,
+                  }))}
+                  value={formDetails.organizationName}
+                  onChange={(e) => {
+                    setFormDetails({
+                      ...formDetails,
+                      organizationName: e.target.value,
+                    });
+                    setErrors((prevErrors) => ({
+                      ...prevErrors,
+                      organizationName: "",
+                    }));
+                  }}
+                  placeholder="Select Organization"
+                  error={errors.organizationName}
+                  required
+                  searchable
+                  clearable
+                />
               </div>
 
               <div className="form-group">
-                <label>Form Name *</label>
+                <label>
+                  Form Name <span style={{ color: "#dc2626" }}>*</span>
+                </label>
                 <input
                   type="text"
-                  name="formName" // Important!
+                  name="formName"
                   className="form-input"
                   value={formDetails.formName}
                   onChange={handleInputChange}
@@ -665,52 +724,41 @@ const AddForm = () => {
                   <small className="error-text">{errors.formName}</small>
                 )}
               </div>
-
               <div className="form-group">
-                <label>Form Type *</label>
-                <div className="custom-select">
-                  <div
-                    className="select-header"
-                    onClick={() =>
-                      setFormTypeDropdownOpen(!formTypeDropdownOpen)
-                    }
-                  >
-                    <span
-                      className={formDetails.formType ? "" : "placeholder-text"}
-                    >
-                      {formDetails.formType || "Select Form Type"}
-                    </span>
-                    {formTypeDropdownOpen ? (
-                      <ChevronUp size={18} />
-                    ) : (
-                      <ChevronDown size={18} />
-                    )}
-                  </div>
-                  {formTypeDropdownOpen && (
-                    <div className="select-dropdown">
-                      {formTypes.map((type, index) => (
-                        <div
-                          key={index}
-                          className="select-option"
-                          onClick={() => selectFormType(type)}
-                        >
-                          {type}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {errors.formType && (
-                  <small className="error-text">{errors.formType}</small>
-                )}
+                <CustomSelect
+                  label="Form Type"
+                  name="formType"
+                  options={formTypes.map((type) => ({
+                    value: type,
+                    label: type,
+                  }))}
+                  value={formDetails.formType}
+                  onChange={(e) => {
+                    setFormDetails({
+                      ...formDetails,
+                      formType: e.target.value,
+                    });
+                    setErrors((prevErrors) => ({
+                      ...prevErrors,
+                      formType: "",
+                    }));
+                  }}
+                  placeholder="Select Form Type"
+                  error={errors.formType}
+                  required
+                  searchable
+                  clearable
+                />
               </div>
 
               <div className="form-group ">
-                <label>Description *</label>
+                <label>
+                  Description <span style={{ color: "#dc2626" }}>*</span>
+                </label>
                 <textarea
                   className="form-textarea"
                   value={formDetails.description}
-                  name="description" // Important!
+                  name="description"
                   onChange={handleInputChange}
                   placeholder="Enter Description"
                 />
@@ -726,21 +774,17 @@ const AddForm = () => {
                   value={formDetails.isMainForm ? "true" : "false"}
                   onChange={(e) => {
                     const newIsMainForm = e.target.value === "true";
-
-                    // 🔹 Update formDetails first
                     setFormDetails((prev) => ({
                       ...prev,
                       isMainForm: newIsMainForm,
                     }));
-
-                    // 🔹 Conditionally clear the error based on valid combinations
                     if (
                       (formDetails.formType === "Sub Form" && !newIsMainForm) ||
                       (formDetails.formType === "Main Form" && newIsMainForm)
                     ) {
                       setErrors((prevErrors) => ({
                         ...prevErrors,
-                        isMainForm: "", // Clear error if valid
+                        isMainForm: "",
                       }));
                     }
                   }}
@@ -752,41 +796,35 @@ const AddForm = () => {
                   <small className="error-text">{errors.isMainForm}</small>
                 )}
               </div>
-
               {!formDetails.isMainForm && (
                 <div className="form-group">
-                  <label>Main Form Name *</label>
-
-                  <select
-                    className="form-input"
+                  <CustomSelect
+                    label="Main Form Name"
+                    name="mainFormName"
+                    options={mainFormsNameList.map((item) => ({
+                      value: item.formId,
+                      label: item.formName,
+                    }))}
                     value={formDetails.mainFormName || ""}
                     onChange={(e) => {
                       const value = e.target.value;
-
                       setFormDetails({
                         ...formDetails,
                         mainFormName: value,
                       });
-
                       if (value) {
                         setErrors((prevErrors) => ({
                           ...prevErrors,
-                          mainFormName: "", // Clear error if value exists
+                          mainFormName: "",
                         }));
                       }
                     }}
-                  >
-                    <option value="">-- Select Main Form Name --</option>
-                    {mainFormsNameList.map((item, idx) => (
-                      <option key={idx} value={item.formId}>
-                        {item.formName}
-                      </option>
-                    ))}
-                  </select>
-
-                  {errors.mainFormName && (
-                    <small className="error-text">{errors.mainFormName}</small>
-                  )}
+                    placeholder="-- Select Main Form Name --"
+                    error={errors.mainFormName}
+                    required
+                    searchable
+                    clearable
+                  />
                 </div>
               )}
 
@@ -808,7 +846,11 @@ const AddForm = () => {
               </div>
             </div>
           </div>
-          {/* Basic Component Code */}
+        );
+
+      case 1:
+        // Step 1: Add Fields
+        return (
           <div className="two-column-layout">
             <div className="column sidebar">
               <h4 className="section-title">BASIC COMPONENTS</h4>
@@ -827,7 +869,7 @@ const AddForm = () => {
                 ))}
               </div>
             </div>
-            {/* Drop Zone Code */}
+
             <div className="column">
               <h4 className="section-title">DROP ZONE</h4>
               <div className="drop-zone">
@@ -839,30 +881,36 @@ const AddForm = () => {
                   <div className="dropped-components-grid">
                     {formDetails.form.map((f, idx) => (
                       <div key={idx} className="dropped-item-grid">
-                        {/* Field Type Label on Top */}
                         <div className="field-type-pill">
                           {getFieldTypeName(f.field_type)}
                         </div>
-
                         <span className="field-badge">{idx + 1}</span>
-
                         <span className="dropped-item-text">{f.label}</span>
-
                         <div className="dropped-item-actions">
-                          <button
-                            className="btn-icon btn-edits"
+                          <CustomButton
+                            variant="warning"
+                            size="sm"
+                            icon={<Edit size={14} />}
                             onClick={() => editField(f, idx)}
                             title="Edit field"
-                          >
-                            <Edit size={14} />
-                          </button>
-                          <button
-                            className="btn-icon btn-deletes"
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              padding: "0",
+                            }}
+                          />
+                          <CustomButton
+                            variant="danger"
+                            size="sm"
+                            icon={<Trash2 size={14} />}
                             onClick={() => deleteField(idx)}
                             title="Delete field"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              padding: "0",
+                            }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -874,1006 +922,1179 @@ const AddForm = () => {
               </div>
             </div>
           </div>
+        );
 
+      case 2:
+        // Step 2: Review
+        return (
+          <div className="addform-section">
+            <h4 className="section-title">Review Form Details</h4>
+            <div
+              style={{
+                backgroundColor: "#f8f9fa",
+                padding: "20px",
+                borderRadius: "12px",
+                marginBottom: "20px",
+              }}
+            >
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Organization:</strong> {formDetails.organizationName}
+              </div>
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Form Name:</strong> {formDetails.formName}
+              </div>
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Form Type:</strong> {formDetails.formType}
+              </div>
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Description:</strong> {formDetails.description}
+              </div>
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Status:</strong>{" "}
+                {formDetails.active ? "Active" : "Inactive"}
+              </div>
+              <div>
+                <strong>Total Fields:</strong> {formDetails.form.length}
+              </div>
+            </div>
+
+            {formDetails.form.length > 0 && (
+              <>
+                <h4 className="section-title">Form Fields</h4>
+                <div style={{ overflowX: "auto" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ backgroundColor: "#f1f5f9" }}>
+                        <th
+                          style={{
+                            padding: "12px",
+                            textAlign: "left",
+                            borderBottom: "2px solid #e2e8f0",
+                          }}
+                        >
+                          #
+                        </th>
+                        <th
+                          style={{
+                            padding: "12px",
+                            textAlign: "left",
+                            borderBottom: "2px solid #e2e8f0",
+                          }}
+                        >
+                          Field Name
+                        </th>
+                        <th
+                          style={{
+                            padding: "12px",
+                            textAlign: "left",
+                            borderBottom: "2px solid #e2e8f0",
+                          }}
+                        >
+                          Type
+                        </th>
+                        <th
+                          style={{
+                            padding: "12px",
+                            textAlign: "left",
+                            borderBottom: "2px solid #e2e8f0",
+                          }}
+                        >
+                          Label
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formDetails.form.map((field, idx) => (
+                        <tr key={idx}>
+                          <td
+                            style={{
+                              padding: "12px",
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            {idx + 1}
+                          </td>
+                          <td
+                            style={{
+                              padding: "12px",
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            {field.field_name}
+                          </td>
+                          <td
+                            style={{
+                              padding: "12px",
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            {getFieldTypeName(field.field_type)}
+                          </td>
+                          <td
+                            style={{
+                              padding: "12px",
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            {field.label}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <div className="addform-container">
+        <div className="addform-card">
+          <h3 className="addform-title">Create Form</h3>
+
+          <CustomAlert
+            type={alert.type}
+            title={alert.title}
+            message={alert.message}
+            show={alert.show}
+            onClose={closeAlert}
+            autoClose={1500}
+          />
+
+          {/* ✨ STEPPER COMPONENT */}
+          <Stepper
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={handleStepClick}
+            clickable={true}
+            orientation="horizontal"
+          />
+
+          {/* ✨ RENDER CURRENT STEP CONTENT */}
+          {renderStepContent()}
+
+          {/* ✨ NAVIGATION BUTTONS */}
           <div className="form-actions-fixed">
-            <button className="btn-primary" onClick={handleFormSave}>
-              Save Form
-            </button>
-            <button className="btn-secondary" onClick={() => navigate("/app")}>
-              <XCircle size={16} /> Cancel
-            </button>
+            {currentStep > 0 && (
+              <CustomButton
+                variant="secondary"
+                icon={<ArrowLeft size={16} />}
+                onClick={handlePrevious}
+              >
+                Previous
+              </CustomButton>
+            )}
+
+            {currentStep < steps.length - 1 ? (
+              <CustomButton
+                variant="primary"
+                icon={<ArrowRight size={16} />}
+                iconPosition="right"
+                onClick={handleNext}
+              >
+                Next
+              </CustomButton>
+            ) : (
+              <CustomButton variant="success" onClick={handleFormSave}>
+                Save Form
+              </CustomButton>
+            )}
+
+            <CustomButton
+              variant="secondary"
+              icon={<XCircle size={16} />}
+              onClick={() => navigate("/app")}
+            >
+              Cancel
+            </CustomButton>
           </div>
         </div>
       </div>
-      {/* Tabs Code */}
-      {showModal && selectedField && fieldConfig && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+      <CustomModal
+        show={showModal && selectedField && fieldConfig}
+        onClose={() => setShowModal(false)}
+        title={`${editingFieldIndex >= 0 ? "EDIT FIELD" : "ADD FIELD"} - ${
+          selectedField?.field_name || ""
+        }`}
+        size="lg"
+        footer={
+          <>
+            <CustomButton variant="primary" onClick={handleFieldSave}>
+              {editingFieldIndex >= 0 ? "Update Field" : "Save Field"}
+            </CustomButton>
+            <CustomButton variant="light" onClick={() => setShowModal(false)}>
+              Cancel
+            </CustomButton>
+          </>
+        }
+      >
+        {/* Tabs */}
+        <div className="tab-header">
           <div
-            className="modal-content-new"
-            onClick={(e) => e.stopPropagation()}
+            className={`tab-item ${activeTab === "display" ? "active" : ""}`}
+            onClick={() => setActiveTab("display")}
           >
-            <div className="modal-header">
-              <h4 className="modal-title">
-                {editingFieldIndex >= 0 ? "EDIT FIELD" : "ADD FIELD"} -{" "}
-                {selectedField.field_name}
-              </h4>
-              <button
-                className="modal-close-btn"
-                onClick={() => setShowModal(false)}
-              >
-                <X size={20} />
-              </button>
+            Display
+          </div>
+          <div
+            className={`tab-item ${activeTab === "constraint" ? "active" : ""}`}
+            onClick={() => setActiveTab("constraint")}
+          >
+            Constraint
+          </div>
+          {["radio", "select", "checkbox"].includes(
+            selectedField?.field_type
+          ) && (
+            <div
+              className={`tab-item ${activeTab === "data" ? "active" : ""}`}
+              onClick={() => setActiveTab("data")}
+            >
+              Data
             </div>
+          )}
+        </div>
 
-            {/* Tabs */}
-            <div className="tab-header">
-              <div
-                className={`tab-item ${
-                  activeTab === "display" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("display")}
-              >
-                Display
-              </div>
-              <div
-                className={`tab-item ${
-                  activeTab === "constraint" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("constraint")}
-              >
-                Constraint
-              </div>
-              {
-                // Only show Data tab for option-based fields
-                ["radio", "select", "checkbox"].includes(
-                  selectedField?.field_type
-                ) && (
-                  <div
-                    className={`tab-item ${
-                      activeTab === "data" ? "active" : ""
-                    }`}
-                    onClick={() => setActiveTab("data")}
-                  >
-                    Data
-                  </div>
-                )
-              }
-            </div>
-
-            <div className="modal-body">
-              {/* Display Tab Content */}
-              {activeTab === "display" && (
-                <>
-                  <div className="modal-section">
-                    <div className="form-grid-two-columns">
-                      <div className="form-group">
-                        <label>Label Name *</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={fieldConfig.label}
-                          name="label"
-                          onChange={(e) =>
-                            handleFieldConfigChange("label", e.target.value)
-                          }
-                          placeholder="Text Field"
-                        />
-                        {errors.label && (
-                          <small className="error-text">{errors.label}</small>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label>Field Name *</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={fieldConfig.field_name}
-                          name="field_name"
-                          onChange={(e) =>
-                            handleFieldConfigChange(
-                              "field_name",
-                              e.target.value
-                            )
-                          }
-                          placeholder="text_field"
-                        />
-                        {errors.field_name && (
-                          <small className="error-text">
-                            {errors.field_name}
-                          </small>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label>Default Value</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={fieldConfig.defaultValue}
-                          onChange={(e) =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              defaultValue: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Placeholder *</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={fieldConfig.placeholder}
-                          name="placeholder"
-                          onChange={(e) =>
-                            handleFieldConfigChange(
-                              "placeholder",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Enter Text Field"
-                        />
-                        {errors.placeholder && (
-                          <small className="error-text">
-                            {errors.placeholder}
-                          </small>
-                        )}
-                      </div>
-
-                      <div className="form-group">
-                        <label>Tooltip</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="Enter tooltip"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Description</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={fieldConfig.description}
-                          onChange={(e) =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              description: e.target.value,
-                            })
-                          }
-                          placeholder="Enter Description"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="cards-container">
-                    <div className="card">
-                      <div className="card-content">
-                        <ToggleButton
-                          isOn={fieldConfig.is_show_to_listing}
-                          onToggle={() =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              is_show_to_listing:
-                                !fieldConfig.is_show_to_listing,
-                            })
-                          }
-                          label="Show in Listing"
-                        />
-                        <div className="form-group">
-                          <label>Listing Value Path</label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            placeholder="e.g., data.value"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="card">
-                      <div className="card-content">
-                        <ToggleButton
-                          isOn={fieldConfig.is_show_to_form}
-                          onToggle={() =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              is_show_to_form: !fieldConfig.is_show_to_form,
-                            })
-                          }
-                          label="Show in Form"
-                        />
-                        <ToggleButton
-                          isOn={fieldConfig.is_active}
-                          onToggle={() =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              is_active: !fieldConfig.is_active,
-                            })
-                          }
-                          label="Active"
-                        />
-                        <ToggleButton
-                          isOn={fieldConfig.is_hidden}
-                          onToggle={() =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              is_hidden: !fieldConfig.is_hidden,
-                            })
-                          }
-                          label="Hidden"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="card">
-                      <div className="card-content">
-                        <ToggleButton
-                          isOn={fieldConfig.is_show_to_view}
-                          onToggle={() =>
-                            setFieldConfig({
-                              ...fieldConfig,
-                              is_show_to_view: !fieldConfig.is_show_to_view,
-                            })
-                          }
-                          label="Show in View"
-                        />
-                        <div className="form-group">
-                          <label>View Value Path</label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            placeholder="e.g., data.value"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Constraint Tab Content */}
-              {activeTab === "constraint" && (
-                <div className="modal-section">
-                  <h5 className="section-title">Validation</h5>
-
-                  {/* Toggle switch for enable validation */}
-                  <div
-                    className="toggle-group toggle-validation"
-                    style={{
-                      marginBottom: "12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span className="toggle-label">Enable Validation</span>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={fieldConfig.Validation}
-                        onChange={(e) =>
-                          setFieldConfig({
-                            ...fieldConfig,
-                            Validation: e.target.checked,
-                          })
-                        }
-                      />
-                      <span className="slider round"></span>
-                    </label>
-                  </div>
-
-                  {fieldConfig.Validation && (
-                    <div className="validation-section">
-                      {errors.validationRules && (
-                        <small className="error-text">
-                          {errors.validationRules}
-                        </small>
-                      )}
-
-                      {/* Header row */}
-                      <div
-                        className="validation-rule header-row"
-                        style={{
-                          display: "flex",
-                          fontWeight: "bold",
-                          padding: "8px 0",
-                          gap: "8px",
-                          borderBottom: "1px solid #ddd",
-                        }}
-                      >
-                        <div style={{ width: "20%" }}>Constraint Type</div>
-                        <div style={{ width: "30%" }}>Value</div>
-                        <div style={{ width: "35%" }}>Error Message</div>
-                        <div style={{ width: "15%", textAlign: "center" }}>
-                          Action
-                        </div>
-                      </div>
-
-                      {/* Existing rules */}
-                      {fieldConfig.validationRules.map((rule, idx) => (
-                        <div
-                          key={idx}
-                          className="validation-rule rule-row"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "4px 0", // vertical spacing reduced
-                          }}
-                        >
-                          {/* Type (disabled always) */}
-                          <div style={{ width: "20%" }}>
-                            <select
-                              className="form-input"
-                              value={rule.type}
-                              disabled
-                            >
-                              <option value="required">Required</option>
-                              <option value="pattern">Pattern</option>
-                            </select>
-                          </div>
-
-                          {/* Value */}
-                          <div style={{ width: "30%" }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              placeholder={
-                                rule.type === "required"
-                                  ? "true / false"
-                                  : "Regex pattern"
-                              }
-                              value={
-                                editingRuleIndex === idx
-                                  ? editRuleTemp.value
-                                  : rule.value
-                              }
-                              disabled={editingRuleIndex !== idx}
-                              onChange={(e) => {
-                                if (editingRuleIndex === idx) {
-                                  const newVal = e.target.value;
-                                  setEditRuleTemp((prev) => ({
-                                    ...prev,
-                                    value: newVal,
-                                  }));
-                                  // immediate validation
-                                  let error = "";
-                                  if (!newVal) {
-                                    error = "Value is required";
-                                  } else if (
-                                    rule.type === "required" &&
-                                    newVal !== "true" &&
-                                    newVal !== "false"
-                                  ) {
-                                    error = "Value must be true or false";
-                                  } else if (rule.type === "pattern") {
-                                    try {
-                                      new RegExp(newVal);
-                                    } catch {
-                                      error = "Invalid regex pattern";
-                                    }
-                                  }
-                                  setErrors((prev) => {
-                                    const ne = { ...prev };
-                                    if (error)
-                                      ne[`validationRules_${idx}_value`] =
-                                        error;
-                                    else
-                                      delete ne[`validationRules_${idx}_value`];
-                                    return ne;
-                                  });
-                                }
-                              }}
-                            />
-                            {errors[`validationRules_${idx}_value`] && (
-                              <small className="error-text">
-                                {errors[`validationRules_${idx}_value`]}
-                              </small>
-                            )}
-                          </div>
-
-                          {/* Error Message */}
-                          <div style={{ width: "35%" }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              placeholder="Error message"
-                              value={
-                                editingRuleIndex === idx
-                                  ? editRuleTemp.errorMsg
-                                  : rule.errorMsg
-                              }
-                              disabled={editingRuleIndex !== idx}
-                              onChange={(e) => {
-                                if (editingRuleIndex === idx) {
-                                  const newErrMsg = e.target.value;
-                                  setEditRuleTemp((prev) => ({
-                                    ...prev,
-                                    errorMsg: newErrMsg,
-                                  }));
-                                  const error = !newErrMsg.trim()
-                                    ? "Error message is required"
-                                    : "";
-                                  setErrors((prev) => {
-                                    const ne = { ...prev };
-                                    if (error)
-                                      ne[`validationRules_${idx}_errorMsg`] =
-                                        error;
-                                    else
-                                      delete ne[
-                                        `validationRules_${idx}_errorMsg`
-                                      ];
-                                    return ne;
-                                  });
-                                }
-                              }}
-                            />
-                            {errors[`validationRules_${idx}_errorMsg`] && (
-                              <small className="error-text">
-                                {errors[`validationRules_${idx}_errorMsg`]}
-                              </small>
-                            )}
-                          </div>
-
-                          {/* Action column with buttons inline */}
-                          <div
-                            style={{
-                              width: "15%",
-                              display: "flex",
-                              justifyContent: "center",
-                              gap: "6px",
-                            }}
-                          >
-                            {editingRuleIndex === idx ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-addforms"
-                                  onClick={() => {
-                                    // Save handler
-                                    if (
-                                      errors[`validationRules_${idx}_value`] ||
-                                      errors[`validationRules_${idx}_errorMsg`]
-                                    ) {
-                                      return;
-                                    }
-                                    const updated = [
-                                      ...fieldConfig.validationRules,
-                                    ];
-                                    updated[idx] = {
-                                      ...updated[idx],
-                                      value: editRuleTemp.value,
-                                      errorMsg: editRuleTemp.errorMsg,
-                                    };
-                                    setFieldConfig({
-                                      ...fieldConfig,
-                                      validationRules: updated,
-                                    });
-                                    setEditingRuleIndex(-1);
-                                    setErrors((prev) => {
-                                      const ne = { ...prev };
-                                      delete ne[`validationRules_${idx}_value`];
-                                      delete ne[
-                                        `validationRules_${idx}_errorMsg`
-                                      ];
-                                      return ne;
-                                    });
-                                  }}
-                                >
-                                  <Check size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-deletes"
-                                  onClick={() => {
-                                    // Cancel edit
-                                    setEditingRuleIndex(-1);
-                                    setErrors((prev) => {
-                                      const ne = { ...prev };
-                                      delete ne[`validationRules_${idx}_value`];
-                                      delete ne[
-                                        `validationRules_${idx}_errorMsg`
-                                      ];
-                                      return ne;
-                                    });
-                                  }}
-                                >
-                                  <X size={14} />
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-edits"
-                                  onClick={() => {
-                                    setEditingRuleIndex(idx);
-                                    setEditRuleTemp({
-                                      value: rule.value,
-                                      errorMsg: rule.errorMsg,
-                                    });
-                                  }}
-                                >
-                                  <Edit size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-deletes"
-                                  onClick={() => {
-                                    deleteValidationRule(idx);
-                                    if (editingRuleIndex === idx)
-                                      setEditingRuleIndex(-1);
-                                  }}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Add new rule row */}
-                      <div
-                        className="validation-rule rule-row"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          marginTop: "10px",
-                          paddingTop: "8px",
-                          borderTop: "1px solid #ccc",
-                        }}
-                      >
-                        <div style={{ width: "20%" }}>
-                          <select
-                            className="form-input"
-                            value={tempRule.type || ""}
-                            onChange={(e) => {
-                              setTempRule({
-                                ...tempRule,
-                                type: e.target.value,
-                                value: "",
-                                errorMsg: "",
-                              });
-                              setRuleErrors((prev) => {
-                                const ne = { ...prev };
-                                delete ne.type;
-                                delete ne.value;
-                                delete ne.errorMsg;
-                                return ne;
-                              });
-                            }}
-                          >
-                            <option value="">Select type</option>
-                            {!fieldConfig.validationRules.some(
-                              (r) => r.type === "required"
-                            ) && <option value="required">Required</option>}
-                            <option value="pattern">Pattern</option>
-                          </select>
-                          {ruleErrors.type && (
-                            <small className="error-text">
-                              {ruleErrors.type}
-                            </small>
-                          )}
-                        </div>
-
-                        <div style={{ width: "30%" }}>
-                          <input
-                            className="form-input"
-                            type="text"
-                            placeholder={
-                              tempRule.type === "required"
-                                ? "true or false"
-                                : tempRule.type === "pattern"
-                                ? "Regex pattern"
-                                : "Value"
-                            }
-                            value={tempRule.value}
-                            onChange={(e) => {
-                              setTempRule({
-                                ...tempRule,
-                                value: e.target.value,
-                              });
-                              setRuleErrors((prev) => {
-                                const ne = { ...prev };
-                                delete ne.value;
-                                return ne;
-                              });
-                            }}
-                          />
-                          {ruleErrors.value && (
-                            <small className="error-text">
-                              {ruleErrors.value}
-                            </small>
-                          )}
-                        </div>
-
-                        <div style={{ width: "35%" }}>
-                          <input
-                            className="form-input"
-                            type="text"
-                            placeholder="Error message"
-                            value={tempRule.errorMsg}
-                            onChange={(e) => {
-                              setTempRule({
-                                ...tempRule,
-                                errorMsg: e.target.value,
-                              });
-                              setRuleErrors((prev) => {
-                                const ne = { ...prev };
-                                delete ne.errorMsg;
-                                return ne;
-                              });
-                            }}
-                          />
-                          {ruleErrors.errorMsg && (
-                            <small className="error-text">
-                              {ruleErrors.errorMsg}
-                            </small>
-                          )}
-                        </div>
-
-                        <div
-                          style={{
-                            width: "15%",
-                            display: "flex",
-                            justifyContent: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="btn-icon btn-addforms"
-                            onClick={addValidationRule}
-                          >
-                            <PlusCircle size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Data Tab Content */}
-              {activeTab === "data" && (
-                <div className="modal-section">
+        <div className="modal-body">
+          {/* Display Tab Content */}
+          {activeTab === "display" && (
+            <>
+              <div className="modal-section">
+                <div className="form-grid-two-columns">
                   <div className="form-group">
-                    <label>Data Source Type *</label>
-                    <select
+                    <label>Label Name *</label>
+                    <input
+                      type="text"
                       className="form-input"
-                      value={fieldConfig.dataSourceType}
+                      value={fieldConfig.label}
+                      name="label"
+                      onChange={(e) =>
+                        handleFieldConfigChange("label", e.target.value)
+                      }
+                      placeholder="Text Field"
+                    />
+                    {errors.label && (
+                      <small className="error-text">{errors.label}</small>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Field Name *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={fieldConfig.field_name}
+                      name="field_name"
+                      onChange={(e) =>
+                        handleFieldConfigChange("field_name", e.target.value)
+                      }
+                      placeholder="text_field"
+                    />
+                    {errors.field_name && (
+                      <small className="error-text">{errors.field_name}</small>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Default Value</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={fieldConfig.defaultValue}
                       onChange={(e) =>
                         setFieldConfig({
                           ...fieldConfig,
-                          dataSourceType: e.target.value,
+                          defaultValue: e.target.value,
                         })
                       }
-                    >
-                      <option value="static">Static</option>
-                      <option value="API">API</option>
-                      <option value="Dyanamic">Dyanamic</option>
-                    </select>
+                    />
                   </div>
 
-                  {fieldConfig.dataSourceType === "static" && (
-                    <div className="validation-section">
-                      {/* 🔸 Error Message */}
-                      {errors.options && (
-                        <small className="error-text">{errors.options}</small>
-                      )}
+                  <div className="form-group">
+                    <label>Placeholder *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={fieldConfig.placeholder}
+                      name="placeholder"
+                      onChange={(e) =>
+                        handleFieldConfigChange("placeholder", e.target.value)
+                      }
+                      placeholder="Enter Text Field"
+                    />
+                    {errors.placeholder && (
+                      <small className="error-text">{errors.placeholder}</small>
+                    )}
+                  </div>
 
-                      {/* 🔹 Header row */}
-                      <div
-                        className="validation-rule header-row"
-                        style={{
-                          display: "flex",
-                          fontWeight: "bold",
-                          padding: "8px 0",
-                          gap: "8px",
-                          borderBottom: "1px solid #ddd",
-                        }}
-                      >
-                        <div style={{ width: "40%" }}>Value *</div>
-                        <div style={{ width: "40%" }}>Label *</div>
-                        <div style={{ width: "20%", textAlign: "center" }}>
-                          Action
-                        </div>
+                  <div className="form-group">
+                    <label>Tooltip</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Enter tooltip"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Description</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={fieldConfig.description}
+                      onChange={(e) =>
+                        setFieldConfig({
+                          ...fieldConfig,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Enter Description"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="cards-container">
+                <div className="card">
+                  <div className="card-content">
+                    <ToggleButton
+                      isOn={fieldConfig.is_show_to_listing}
+                      onToggle={() =>
+                        setFieldConfig({
+                          ...fieldConfig,
+                          is_show_to_listing: !fieldConfig.is_show_to_listing,
+                        })
+                      }
+                      label="Show in Listing"
+                    />
+                    <div className="form-group">
+                      <label>Listing Value Path</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g., data.value"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-content">
+                    <ToggleButton
+                      isOn={fieldConfig.is_show_to_form}
+                      onToggle={() =>
+                        setFieldConfig({
+                          ...fieldConfig,
+                          is_show_to_form: !fieldConfig.is_show_to_form,
+                        })
+                      }
+                      label="Show in Form"
+                    />
+                    <ToggleButton
+                      isOn={fieldConfig.is_active}
+                      onToggle={() =>
+                        setFieldConfig({
+                          ...fieldConfig,
+                          is_active: !fieldConfig.is_active,
+                        })
+                      }
+                      label="Active"
+                    />
+                    <ToggleButton
+                      isOn={fieldConfig.is_hidden}
+                      onToggle={() =>
+                        setFieldConfig({
+                          ...fieldConfig,
+                          is_hidden: !fieldConfig.is_hidden,
+                        })
+                      }
+                      label="Hidden"
+                    />
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-content">
+                    <ToggleButton
+                      isOn={fieldConfig.is_show_to_view}
+                      onToggle={() =>
+                        setFieldConfig({
+                          ...fieldConfig,
+                          is_show_to_view: !fieldConfig.is_show_to_view,
+                        })
+                      }
+                      label="Show in View"
+                    />
+                    <div className="form-group">
+                      <label>View Value Path</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g., data.value"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Constraint Tab Content */}
+          {activeTab === "constraint" && (
+            <div className="modal-section">
+              <h5 className="section-title">Validation</h5>
+
+              <div
+                className="toggle-group toggle-validation"
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span className="toggle-label">Enable Validation</span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={fieldConfig.Validation}
+                    onChange={(e) =>
+                      setFieldConfig({
+                        ...fieldConfig,
+                        Validation: e.target.checked,
+                      })
+                    }
+                  />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+
+              {fieldConfig.Validation && (
+                <div className="validation-section">
+                  {errors.validationRules && (
+                    <small className="error-text">
+                      {errors.validationRules}
+                    </small>
+                  )}
+
+                  {/* Header row */}
+                  <div
+                    className="validation-rule header-row"
+                    style={{
+                      display: "flex",
+                      fontWeight: "bold",
+                      padding: "8px 0",
+                      gap: "8px",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    <div style={{ width: "20%" }}>Constraint Type</div>
+                    <div style={{ width: "30%" }}>Value</div>
+                    <div style={{ width: "35%" }}>Error Message</div>
+                    <div style={{ width: "15%", textAlign: "center" }}>
+                      Action
+                    </div>
+                  </div>
+
+                  {/* Existing rules */}
+                  {fieldConfig.validationRules.map((rule, idx) => (
+                    <div
+                      key={idx}
+                      className="validation-rule rule-row"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "4px 0",
+                      }}
+                    >
+                      {/* Type */}
+                      <div style={{ width: "20%" }}>
+                        <CustomSelect
+                          name="validationRuleTypeEdit"
+                          options={[
+                            { value: "required", label: "Required" },
+                            { value: "pattern", label: "Pattern" },
+                          ]}
+                          value={rule.type}
+                          onChange={() => {}}
+                          disabled
+                          searchable={false}
+                          clearable={false}
+                          style={{ marginBottom: "0" }}
+                        />
                       </div>
 
-                      {/* 🔹 Existing Option Rows */}
-                      {fieldConfig.options.map((opt, idx) => (
-                        <div
-                          key={idx}
-                          className="validation-rule rule-row"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "4px 0",
+                      {/* Value */}
+                      <div style={{ width: "30%" }}>
+                        <input
+                          className="form-input"
+                          type="text"
+                          placeholder={
+                            rule.type === "required"
+                              ? "true / false"
+                              : "Regex pattern"
+                          }
+                          value={
+                            editingRuleIndex === idx
+                              ? editRuleTemp.value
+                              : rule.value
+                          }
+                          disabled={editingRuleIndex !== idx}
+                          onChange={(e) => {
+                            if (editingRuleIndex === idx) {
+                              const newVal = e.target.value;
+                              setEditRuleTemp((prev) => ({
+                                ...prev,
+                                value: newVal,
+                              }));
+                              let error = "";
+                              if (!newVal) {
+                                error = "Value is required";
+                              } else if (
+                                rule.type === "required" &&
+                                newVal !== "true" &&
+                                newVal !== "false"
+                              ) {
+                                error = "Value must be true or false";
+                              } else if (rule.type === "pattern") {
+                                try {
+                                  new RegExp(newVal);
+                                } catch {
+                                  error = "Invalid regex pattern";
+                                }
+                              }
+                              setErrors((prev) => {
+                                const ne = { ...prev };
+                                if (error)
+                                  ne[`validationRules_${idx}_value`] = error;
+                                else delete ne[`validationRules_${idx}_value`];
+                                return ne;
+                              });
+                            }
                           }}
-                        >
-                          {/* Value */}
-                          <div style={{ width: "40%" }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              value={
-                                editingOptionIndex === idx
-                                  ? tempOption.value
-                                  : opt.value
-                              }
-                              onChange={(e) => {
-                                if (editingOptionIndex === idx) {
-                                  setTempOption((prev) => ({
-                                    ...prev,
-                                    value: e.target.value,
-                                  }));
-                                  if (errors[`options_${idx}_value`]) {
-                                    setErrors((prev) => {
-                                      const ne = { ...prev };
-                                      delete ne[`options_${idx}_value`];
-                                      return ne;
-                                    });
-                                  }
-                                }
-                              }}
-                              disabled={editingOptionIndex !== idx}
-                            />
-                            {errors[`options_${idx}_value`] && (
-                              <small className="error-text">
-                                {errors[`options_${idx}_value`]}
-                              </small>
-                            )}
-                          </div>
+                        />
+                        {errors[`validationRules_${idx}_value`] && (
+                          <small className="error-text">
+                            {errors[`validationRules_${idx}_value`]}
+                          </small>
+                        )}
+                      </div>
 
-                          {/* Label */}
-                          <div style={{ width: "40%" }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              value={
-                                editingOptionIndex === idx
-                                  ? tempOption.label
-                                  : opt.label
-                              }
-                              onChange={(e) => {
-                                if (editingOptionIndex === idx) {
-                                  setTempOption((prev) => ({
-                                    ...prev,
-                                    label: e.target.value,
-                                  }));
-                                  if (errors[`options_${idx}_label`]) {
-                                    setErrors((prev) => {
-                                      const ne = { ...prev };
-                                      delete ne[`options_${idx}_label`];
-                                      return ne;
-                                    });
-                                  }
-                                }
-                              }}
-                              disabled={editingOptionIndex !== idx}
-                            />
-                            {errors[`options_${idx}_label`] && (
-                              <small className="error-text">
-                                {errors[`options_${idx}_label`]}
-                              </small>
-                            )}
-                          </div>
+                      {/* Error Message */}
+                      <div style={{ width: "35%" }}>
+                        <input
+                          className="form-input"
+                          type="text"
+                          placeholder="Error message"
+                          value={
+                            editingRuleIndex === idx
+                              ? editRuleTemp.errorMsg
+                              : rule.errorMsg
+                          }
+                          disabled={editingRuleIndex !== idx}
+                          onChange={(e) => {
+                            if (editingRuleIndex === idx) {
+                              const newErrMsg = e.target.value;
+                              setEditRuleTemp((prev) => ({
+                                ...prev,
+                                errorMsg: newErrMsg,
+                              }));
+                              const error = !newErrMsg.trim()
+                                ? "Error message is required"
+                                : "";
+                              setErrors((prev) => {
+                                const ne = { ...prev };
+                                if (error)
+                                  ne[`validationRules_${idx}_errorMsg`] = error;
+                                else
+                                  delete ne[`validationRules_${idx}_errorMsg`];
+                                return ne;
+                              });
+                            }
+                          }}
+                        />
+                        {errors[`validationRules_${idx}_errorMsg`] && (
+                          <small className="error-text">
+                            {errors[`validationRules_${idx}_errorMsg`]}
+                          </small>
+                        )}
+                      </div>
 
-                          {/* Action Buttons */}
-                          <div
-                            style={{
-                              width: "20%",
-                              display: "flex",
-                              justifyContent: "center",
-                              gap: "6px",
-                            }}
-                          >
-                            {editingOptionIndex === idx ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-addforms"
-                                  onClick={() => {
-                                    let hasError = false;
-                                    const errorsToSet = {};
-
-                                    if (!tempOption.value.trim()) {
-                                      errorsToSet[`options_${idx}_value`] =
-                                        "Value is required";
-                                      hasError = true;
-                                    }
-                                    if (!tempOption.label.trim()) {
-                                      errorsToSet[`options_${idx}_label`] =
-                                        "Label is required";
-                                      hasError = true;
-                                    }
-
-                                    if (hasError) {
-                                      setErrors((prev) => ({
-                                        ...prev,
-                                        ...errorsToSet,
-                                      }));
-                                      return; // stop further execution, don't save invalid data
-                                    }
-
-                                    // if no error, update options
-                                    const updated = [...fieldConfig.options];
-                                    updated[idx] = {
-                                      value: tempOption.value.trim(),
-                                      label: tempOption.label.trim(),
-                                    };
-                                    setFieldConfig({
-                                      ...fieldConfig,
-                                      options: updated,
-                                    });
-                                    setEditingOptionIndex(-1);
-                                    setTempOption({ value: "", label: "" });
-
-                                    // clear errors for this option
-                                    setErrors((prev) => {
-                                      const ne = { ...prev };
-                                      delete ne[`options_${idx}_value`];
-                                      delete ne[`options_${idx}_label`];
-                                      return ne;
-                                    });
-                                  }}
-                                >
-                                  <Check size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-deletes"
-                                  onClick={() => {
-                                    setEditingOptionIndex(-1);
-                                    setTempOption({ value: "", label: "" });
-                                    setErrors((prev) => {
-                                      const ne = { ...prev };
-                                      delete ne[`options_${idx}_value`];
-                                      delete ne[`options_${idx}_label`];
-                                      return ne;
-                                    });
-                                  }}
-                                >
-                                  <X size={14} />
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-edits"
-                                  onClick={() => {
-                                    setEditingOptionIndex(idx);
-                                    setTempOption({
-                                      value: opt.value,
-                                      label: opt.label,
-                                    });
-                                  }}
-                                >
-                                  <Edit size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-icon btn-deletes"
-                                  onClick={() => deleteOption(idx)}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* 🔹 Add New Option Row */}
+                      {/* Action buttons */}
                       <div
-                        className="validation-rule rule-row"
                         style={{
+                          width: "15%",
                           display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          marginTop: "10px",
-                          paddingTop: "8px",
-                          borderTop: "1px solid #ccc",
+                          justifyContent: "center",
+                          gap: "6px",
                         }}
                       >
-                        <div style={{ width: "40%" }}>
-                          <input
-                            className="form-input"
-                            type="text"
-                            placeholder="Value"
-                            value={newOption.value}
-                            onChange={(e) => {
-                              setNewOption({
-                                ...newOption,
-                                value: e.target.value,
-                              });
-                              if (errors.newOption_value) {
+                        {editingRuleIndex === idx ? (
+                          <>
+                            <CustomButton
+                              variant="success"
+                              size="sm"
+                              icon={<Check size={14} />}
+                              onClick={() => {
+                                if (
+                                  errors[`validationRules_${idx}_value`] ||
+                                  errors[`validationRules_${idx}_errorMsg`]
+                                ) {
+                                  return;
+                                }
+                                const updated = [
+                                  ...fieldConfig.validationRules,
+                                ];
+                                updated[idx] = {
+                                  ...updated[idx],
+                                  value: editRuleTemp.value,
+                                  errorMsg: editRuleTemp.errorMsg,
+                                };
+                                setFieldConfig({
+                                  ...fieldConfig,
+                                  validationRules: updated,
+                                });
+                                setEditingRuleIndex(-1);
                                 setErrors((prev) => {
                                   const ne = { ...prev };
-                                  delete ne.newOption_value;
+                                  delete ne[`validationRules_${idx}_value`];
+                                  delete ne[`validationRules_${idx}_errorMsg`];
                                   return ne;
                                 });
-                              }
-                            }}
-                          />
-                          {errors.newOption_value && (
-                            <small className="error-text">
-                              {errors.newOption_value}
-                            </small>
-                          )}
-                        </div>
-
-                        <div style={{ width: "40%" }}>
-                          <input
-                            className="form-input"
-                            type="text"
-                            placeholder="Label"
-                            value={newOption.label}
-                            onChange={(e) => {
-                              setNewOption({
-                                ...newOption,
-                                label: e.target.label || e.target.value,
-                              });
-                              if (errors.newOption_label) {
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                            <CustomButton
+                              variant="danger"
+                              size="sm"
+                              icon={<X size={14} />}
+                              onClick={() => {
+                                setEditingRuleIndex(-1);
                                 setErrors((prev) => {
                                   const ne = { ...prev };
-                                  delete ne.newOption_label;
+                                  delete ne[`validationRules_${idx}_value`];
+                                  delete ne[`validationRules_${idx}_errorMsg`];
                                   return ne;
                                 });
-                              }
-                            }}
-                          />
-                          {errors.newOption_label && (
-                            <small className="error-text">
-                              {errors.newOption_label}
-                            </small>
-                          )}
-                        </div>
-
-                        <div
-                          style={{
-                            width: "20%",
-                            display: "flex",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="btn-icon btn-addforms"
-                            onClick={addNewOption}
-                          >
-                            <PlusCircle size={16} />
-                          </button>
-                        </div>
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <CustomButton
+                              variant="warning"
+                              size="sm"
+                              icon={<Edit size={14} />}
+                              onClick={() => {
+                                setEditingRuleIndex(idx);
+                                setEditRuleTemp({
+                                  value: rule.value,
+                                  errorMsg: rule.errorMsg,
+                                });
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                            <CustomButton
+                              variant="danger"
+                              size="sm"
+                              icon={<Trash2 size={14} />}
+                              onClick={() => {
+                                deleteValidationRule(idx);
+                                if (editingRuleIndex === idx)
+                                  setEditingRuleIndex(-1);
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
-                  )}
+                  ))}
+
+                  {/* Add new rule row */}
+                  <div
+                    className="validation-rule rule-row"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "10px",
+                      paddingTop: "8px",
+                      borderTop: "1px solid #ccc",
+                    }}
+                  >
+                    <div style={{ width: "20%" }}>
+                      <CustomSelect
+                        name="validationRuleType"
+                        options={[
+                          ...(!fieldConfig.validationRules.some(
+                            (r) => r.type === "required"
+                          )
+                            ? [{ value: "required", label: "Required" }]
+                            : []),
+                          { value: "pattern", label: "Pattern" },
+                        ]}
+                        value={tempRule.type || ""}
+                        onChange={(e) => {
+                          setTempRule({
+                            ...tempRule,
+                            type: e.target.value,
+                            value: "",
+                            errorMsg: "",
+                          });
+                          setRuleErrors((prev) => {
+                            const ne = { ...prev };
+                            delete ne.type;
+                            delete ne.value;
+                            delete ne.errorMsg;
+                            return ne;
+                          });
+                        }}
+                        placeholder="Select type"
+                        error={ruleErrors.type}
+                        searchable={false}
+                        clearable={false}
+                        style={{ marginBottom: "0" }}
+                      />
+                    </div>
+
+                    <div style={{ width: "30%" }}>
+                      <input
+                        className="form-input"
+                        type="text"
+                        placeholder={
+                          tempRule.type === "required"
+                            ? "true or false"
+                            : tempRule.type === "pattern"
+                            ? "Regex pattern"
+                            : "Value"
+                        }
+                        value={tempRule.value}
+                        onChange={(e) => {
+                          setTempRule({
+                            ...tempRule,
+                            value: e.target.value,
+                          });
+                          setRuleErrors((prev) => {
+                            const ne = { ...prev };
+                            delete ne.value;
+                            return ne;
+                          });
+                        }}
+                      />
+                      {ruleErrors.value && (
+                        <small className="error-text">{ruleErrors.value}</small>
+                      )}
+                    </div>
+
+                    <div style={{ width: "35%" }}>
+                      <input
+                        className="form-input"
+                        type="text"
+                        placeholder="Error message"
+                        value={tempRule.errorMsg}
+                        onChange={(e) => {
+                          setTempRule({
+                            ...tempRule,
+                            errorMsg: e.target.value,
+                          });
+                          setRuleErrors((prev) => {
+                            const ne = { ...prev };
+                            delete ne.errorMsg;
+                            return ne;
+                          });
+                        }}
+                      />
+                      {ruleErrors.errorMsg && (
+                        <small className="error-text">
+                          {ruleErrors.errorMsg}
+                        </small>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        width: "15%",
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <CustomButton
+                        variant="success"
+                        size="sm"
+                        icon={<PlusCircle size={16} />}
+                        onClick={addValidationRule}
+                        style={{ width: "32px", height: "32px", padding: "0" }}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
+          )}
 
-            <div className="modal-actions-fixed">
-              <button className="btn-primary" onClick={handleFieldSave}>
-                {editingFieldIndex >= 0 ? "Update Field" : "Save Field"}
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
+          {/* Data Tab Content */}
+          {activeTab === "data" && (
+            <div className="modal-section">
+              <div className="form-group">
+                <CustomSelect
+                  label="Data Source Type"
+                  name="dataSourceType"
+                  options={[
+                    { value: "static", label: "Static" },
+                    { value: "API", label: "API" },
+                    { value: "Dyanamic", label: "Dynamic" },
+                  ]}
+                  value={fieldConfig.dataSourceType}
+                  onChange={(e) =>
+                    setFieldConfig({
+                      ...fieldConfig,
+                      dataSourceType: e.target.value,
+                    })
+                  }
+                  placeholder="Select Data Source Type"
+                  required
+                  searchable={false}
+                  clearable={false}
+                />
+              </div>
+
+              {fieldConfig.dataSourceType === "static" && (
+                <div className="validation-section">
+                  {errors.options && (
+                    <small className="error-text">{errors.options}</small>
+                  )}
+
+                  <div
+                    className="validation-rule header-row"
+                    style={{
+                      display: "flex",
+                      fontWeight: "bold",
+                      padding: "8px 0",
+                      gap: "8px",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    <div style={{ width: "40%" }}>Value *</div>
+                    <div style={{ width: "40%" }}>Label *</div>
+                    <div style={{ width: "20%", textAlign: "center" }}>
+                      Action
+                    </div>
+                  </div>
+
+                  {/* Existing Options */}
+                  {fieldConfig.options.map((opt, idx) => (
+                    <div
+                      key={idx}
+                      className="validation-rule rule-row"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "4px 0",
+                      }}
+                    >
+                      <div style={{ width: "40%" }}>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={
+                            editingOptionIndex === idx
+                              ? tempOption.value
+                              : opt.value
+                          }
+                          onChange={(e) => {
+                            if (editingOptionIndex === idx) {
+                              setTempOption((prev) => ({
+                                ...prev,
+                                value: e.target.value,
+                              }));
+                              if (errors[`options_${idx}_value`]) {
+                                setErrors((prev) => {
+                                  const ne = { ...prev };
+                                  delete ne[`options_${idx}_value`];
+                                  return ne;
+                                });
+                              }
+                            }
+                          }}
+                          disabled={editingOptionIndex !== idx}
+                        />
+                        {errors[`options_${idx}_value`] && (
+                          <small className="error-text">
+                            {errors[`options_${idx}_value`]}
+                          </small>
+                        )}
+                      </div>
+
+                      <div style={{ width: "40%" }}>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={
+                            editingOptionIndex === idx
+                              ? tempOption.label
+                              : opt.label
+                          }
+                          onChange={(e) => {
+                            if (editingOptionIndex === idx) {
+                              setTempOption((prev) => ({
+                                ...prev,
+                                label: e.target.value,
+                              }));
+                              if (errors[`options_${idx}_label`]) {
+                                setErrors((prev) => {
+                                  const ne = { ...prev };
+                                  delete ne[`options_${idx}_label`];
+                                  return ne;
+                                });
+                              }
+                            }
+                          }}
+                          disabled={editingOptionIndex !== idx}
+                        />
+                        {errors[`options_${idx}_label`] && (
+                          <small className="error-text">
+                            {errors[`options_${idx}_label`]}
+                          </small>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          width: "20%",
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        {editingOptionIndex === idx ? (
+                          <>
+                            <CustomButton
+                              variant="success"
+                              size="sm"
+                              icon={<Check size={14} />}
+                              onClick={() => {
+                                let hasError = false;
+                                const errorsToSet = {};
+
+                                if (!tempOption.value.trim()) {
+                                  errorsToSet[`options_${idx}_value`] =
+                                    "Value is required";
+                                  hasError = true;
+                                }
+                                if (!tempOption.label.trim()) {
+                                  errorsToSet[`options_${idx}_label`] =
+                                    "Label is required";
+                                  hasError = true;
+                                }
+
+                                if (hasError) {
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    ...errorsToSet,
+                                  }));
+                                  return;
+                                }
+
+                                const updated = [...fieldConfig.options];
+                                updated[idx] = {
+                                  value: tempOption.value.trim(),
+                                  label: tempOption.label.trim(),
+                                };
+                                setFieldConfig({
+                                  ...fieldConfig,
+                                  options: updated,
+                                });
+                                setEditingOptionIndex(-1);
+                                setTempOption({ value: "", label: "" });
+
+                                setErrors((prev) => {
+                                  const ne = { ...prev };
+                                  delete ne[`options_${idx}_value`];
+                                  delete ne[`options_${idx}_label`];
+                                  return ne;
+                                });
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                            <CustomButton
+                              variant="danger"
+                              size="sm"
+                              icon={<X size={14} />}
+                              onClick={() => {
+                                setEditingOptionIndex(-1);
+                                setTempOption({ value: "", label: "" });
+                                setErrors((prev) => {
+                                  const ne = { ...prev };
+                                  delete ne[`options_${idx}_value`];
+                                  delete ne[`options_${idx}_label`];
+                                  return ne;
+                                });
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <CustomButton
+                              variant="warning"
+                              size="sm"
+                              icon={<Edit size={14} />}
+                              onClick={() => {
+                                setEditingOptionIndex(idx);
+                                setTempOption({
+                                  value: opt.value,
+                                  label: opt.label,
+                                });
+                              }}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                            <CustomButton
+                              variant="danger"
+                              size="sm"
+                              icon={<Trash2 size={14} />}
+                              onClick={() => deleteOption(idx)}
+                              style={{
+                                width: "32px",
+                                height: "32px",
+                                padding: "0",
+                              }}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add New Option Row */}
+                  <div
+                    className="validation-rule rule-row"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "10px",
+                      paddingTop: "8px",
+                      borderTop: "1px solid #ccc",
+                    }}
+                  >
+                    <div style={{ width: "40%" }}>
+                      <input
+                        className="form-input"
+                        type="text"
+                        placeholder="Value"
+                        value={newOption.value}
+                        onChange={(e) => {
+                          setNewOption({ ...newOption, value: e.target.value });
+                          if (errors.newOption_value) {
+                            setErrors((prev) => {
+                              const ne = { ...prev };
+                              delete ne.newOption_value;
+                              return ne;
+                            });
+                          }
+                        }}
+                      />
+                      {errors.newOption_value && (
+                        <small className="error-text">
+                          {errors.newOption_value}
+                        </small>
+                      )}
+                    </div>
+
+                    <div style={{ width: "40%" }}>
+                      <input
+                        className="form-input"
+                        type="text"
+                        placeholder="Label"
+                        value={newOption.label}
+                        onChange={(e) => {
+                          setNewOption({
+                            ...newOption,
+                            label: e.target.label || e.target.value,
+                          });
+                          if (errors.newOption_label) {
+                            setErrors((prev) => {
+                              const ne = { ...prev };
+                              delete ne.newOption_label;
+                              return ne;
+                            });
+                          }
+                        }}
+                      />
+                      {errors.newOption_label && (
+                        <small className="error-text">
+                          {errors.newOption_label}
+                        </small>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        width: "20%",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CustomButton
+                        variant="success"
+                        size="sm"
+                        icon={<PlusCircle size={16} />}
+                        onClick={addNewOption}
+                        style={{ width: "32px", height: "32px", padding: "0" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </CustomModal>
     </>
   );
 };

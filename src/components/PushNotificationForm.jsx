@@ -1,26 +1,43 @@
+// src/components/PushNotificationForm.jsx
 import React, { useState, useEffect } from "react";
 import {
   generateDynamicToken,
   setupMessageListener,
 } from "../firebase/firebaseConfig";
 import { Send } from "react-feather";
-// import "./PushNotificationForm.css";
+import CustomAlert from "./custom_component/CustomAlert";
+import CustomButton from "./custom_component/CustomButton";
+import CustomCard from "./custom_component/CustomCard"; // ✨ NEW IMPORT
 
 const PushNotificationForm = () => {
   const [token, setToken] = useState("");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  // Alert state
+  const [alert, setAlert] = useState({
+    show: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  // Helper functions
+  const showAlert = (type, alertTitle, alertMessage) => {
+    setAlert({ show: true, type, title: alertTitle, message: alertMessage });
+  };
+
+  const closeAlert = () => {
+    setAlert({ ...alert, show: false });
+  };
 
   useEffect(() => {
-    // Load token from localStorage
     const savedToken = localStorage.getItem("fcm_token");
     if (savedToken) {
       setToken(savedToken);
     }
 
-    //  Setup foreground message listener
     setupMessageListener((payload) => {
       console.log("📱 Foreground notification received");
       handleNewNotification({
@@ -29,12 +46,11 @@ const PushNotificationForm = () => {
       });
     });
 
-    //  NEW: Listen for Service Worker messages (Firebase Campaign notifications)
     const handleServiceWorkerMessage = (event) => {
       console.log("📬 Message from Service Worker:", event.data);
 
       if (event.data && event.data.type === "FIREBASE_NOTIFICATION") {
-        console.log(" Storing Firebase notification in localStorage");
+        console.log("💾 Storing Firebase notification in localStorage");
         handleNewNotification({
           title: event.data.notification.title,
           body: event.data.notification.body,
@@ -42,22 +58,18 @@ const PushNotificationForm = () => {
       }
     };
 
-    // Register Service Worker message listener
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener(
         "message",
         handleServiceWorkerMessage
       );
-      console.log(" Service Worker listener registered");
     }
 
-    // Storage event listener
     const handleStorageChange = () => {
       console.log("💾 Storage changed");
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // Cleanup
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       if ("serviceWorker" in navigator) {
@@ -69,7 +81,6 @@ const PushNotificationForm = () => {
     };
   }, []);
 
-  //  Handle new notification (add to localStorage and bell icon)
   const handleNewNotification = (notif) => {
     console.log("💾 Saving notification:", notif);
 
@@ -80,59 +91,60 @@ const PushNotificationForm = () => {
       read: false,
     };
 
-    // Get existing notifications
     let allNotifications =
       JSON.parse(localStorage.getItem("notifications")) || [];
-
-    // Add new notification at the beginning
     allNotifications.unshift(newNotification);
-
-    // Save back to localStorage
     localStorage.setItem("notifications", JSON.stringify(allNotifications));
-    console.log(" Notification saved. Total:", allNotifications.length);
+    console.log("✅ Notification saved. Total:", allNotifications.length);
 
-    // Trigger storage event for UI update
     window.dispatchEvent(new Event("storage"));
   };
 
-  // Token generation
+  // Token generation with alerts
   const handleGenerateToken = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const newToken = await generateDynamicToken();
 
       if (newToken) {
         setToken(newToken);
-        alert(" Token generated successfully!");
+        showAlert(
+          "success",
+          "Token Generated!",
+          "Token generated successfully!"
+        );
         console.log("🔑 Token:", newToken);
       } else {
-        setError("Failed to generate token. Please allow notifications.");
+        showAlert(
+          "error",
+          "Token Failed",
+          "Failed to generate token. Please allow notifications."
+        );
       }
     } catch (err) {
       console.error("❌ Error:", err);
-      setError("Error generating token: " + err.message);
+      showAlert(
+        "error",
+        "Token Error",
+        "Error generating token: " + err.message
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Send Notification (LocalStorage only)
+  // Send Notification with alerts
   const handleSendNotification = () => {
-    // Validation
     if (!title.trim()) {
-      setError("Title is required.");
+      showAlert("warning", "Title Missing", "Title is required.");
       return;
     }
     if (!message.trim()) {
-      setError("Message is required.");
+      showAlert("warning", "Message Missing", "Message is required.");
       return;
     }
 
-    setError("");
-
-    // Create notification object
     const newNotification = {
       title: title,
       body: message,
@@ -140,13 +152,11 @@ const PushNotificationForm = () => {
       read: false,
     };
 
-    // Store in localStorage
     let allNotifications =
       JSON.parse(localStorage.getItem("notifications")) || [];
     allNotifications.unshift(newNotification);
     localStorage.setItem("notifications", JSON.stringify(allNotifications));
 
-    // Show browser notification
     if (Notification.permission === "granted") {
       new Notification(title, {
         body: message,
@@ -154,15 +164,17 @@ const PushNotificationForm = () => {
       });
     }
 
-    // Clear form
     setTitle("");
     setMessage("");
     setToken("");
 
-    // Trigger storage event
     window.dispatchEvent(new Event("storage"));
 
-    alert("📨 Notification sent successfully!");
+    showAlert(
+      "success",
+      "Notification Sent!",
+      "Notification sent successfully!"
+    );
   };
 
   return (
@@ -176,82 +188,76 @@ const PushNotificationForm = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
-        paddingTop: "40px",
-        paddingBottom: "40px",
+        paddingTop: "20px",
+        paddingBottom: "20px",
       }}
     >
-      <div
+      {/* ✨ UPDATED: Main Card with CustomCard */}
+      <CustomCard
+        variant="elevated"
+        padding="none"
         style={{
           maxWidth: "900px",
           width: "100%",
-          backgroundColor: "white",
-          borderRadius: "16px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          overflow: "hidden",
-          marginBottom: "20px",
+          marginBottom: "10px",
         }}
-      >
-        {/* Header Section */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)",
-            padding: "32px 40px",
-            color: "white",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div
-              style={{
-                width: "56px",
-                height: "56px",
-                background: "rgba(255,255,255,0.2)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "28px",
-              }}
-            >
-              🔔
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "28px", fontWeight: "700" }}>
-                Push Notification Manager
-              </h2>
-              <p
-                style={{ margin: "6px 0 0 0", fontSize: "15px", opacity: 0.9 }}
+        header={
+          // ✨ UPDATED: Custom Gradient Header
+          <div
+            style={{
+              background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)",
+              padding: "22px 40px",
+              color: "white",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  background: "rgba(255,255,255,0.2)",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "28px",
+                }}
               >
-                Generate token and send notifications (Firebase Campaign Ready)
-              </p>
+                🔔
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "28px", fontWeight: "700" }}>
+                  Push Notification Manager
+                </h2>
+                <p
+                  style={{
+                    margin: "6px 0 0 0",
+                    fontSize: "15px",
+                    opacity: 0.9,
+                  }}
+                >
+                  Generate token and send notifications (Firebase Campaign
+                  Ready)
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Form Section */}
-        <div style={{ padding: "32px 40px" }}>
-          {/* Error Alert */}
-          {error && (
-            <div
-              style={{
-                padding: "14px 16px",
-                background: "#FEE2E2",
-                border: "1px solid #FCA5A5",
-                borderRadius: "10px",
-                marginBottom: "24px",
-                fontSize: "14px",
-                color: "#991B1B",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <span style={{ fontSize: "18px" }}>⚠️</span>
-              <span>{error}</span>
-            </div>
-          )}
+        }
+      >
+        {/* ✨ Form Section - Now inside CustomCard body */}
+        <div style={{ padding: "20px 40px" }}>
+          {/* Custom Alert */}
+          <CustomAlert
+            type={alert.type}
+            title={alert.title}
+            message={alert.message}
+            show={alert.show}
+            onClose={closeAlert}
+            autoClose={3000}
+          />
 
           {/* Token Field */}
-          <div style={{ marginBottom: "24px" }}>
+          <div style={{ marginBottom: "20px" }}>
             <label
               style={{
                 display: "block",
@@ -283,43 +289,14 @@ const PushNotificationForm = () => {
                   outline: "none",
                 }}
               />
-              <button
-                onClick={handleGenerateToken}
+              <CustomButton
+                variant="success"
+                loading={loading}
                 disabled={loading}
-                style={{
-                  padding: "12px 28px",
-                  background: loading
-                    ? "#9CA3AF"
-                    : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  cursor: loading ? "not-allowed" : "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: loading
-                    ? "none"
-                    : "0 4px 12px rgba(16, 185, 129, 0.3)",
-                  whiteSpace: "nowrap",
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 6px 16px rgba(16, 185, 129, 0.4)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(16, 185, 129, 0.3)";
-                  }
-                }}
+                onClick={handleGenerateToken}
               >
                 {loading ? "Generating..." : "Generate Token"}
-              </button>
+              </CustomButton>
             </div>
             <small
               style={{
@@ -334,7 +311,7 @@ const PushNotificationForm = () => {
           </div>
 
           {/* Title Field */}
-          <div style={{ marginBottom: "24px" }}>
+          <div style={{ marginBottom: "20px" }}>
             <label
               style={{
                 display: "block",
@@ -363,20 +340,11 @@ const PushNotificationForm = () => {
                 transition: "all 0.3s ease",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#4F46E5";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(79, 70, 229, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
           </div>
 
           {/* Message Field */}
-          <div style={{ marginBottom: "28px" }}>
+          <div style={{ marginBottom: "15px" }}>
             <label
               style={{
                 display: "block",
@@ -393,7 +361,7 @@ const PushNotificationForm = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter your notification message..."
-              rows="5"
+              rows="3"
               style={{
                 width: "100%",
                 padding: "12px 16px",
@@ -407,102 +375,21 @@ const PushNotificationForm = () => {
                 fontFamily: "inherit",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#4F46E5";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(79, 70, 229, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#E5E7EB";
-                e.currentTarget.style.boxShadow = "none";
-              }}
             />
           </div>
 
           {/* Send Button */}
-          <button
-            onClick={handleSendNotification}
+          <CustomButton
+            variant="primary"
+            fullWidth
+            icon={<Send size={20} />}
             disabled={!title || !message}
-            style={{
-              width: "100%",
-              padding: "16px",
-              background:
-                !title || !message
-                  ? "#D1D5DB"
-                  : "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "16px",
-              fontWeight: "600",
-              cursor: !title || !message ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              transition: "all 0.3s ease",
-              boxShadow:
-                !title || !message
-                  ? "none"
-                  : "0 6px 20px rgba(99, 102, 241, 0.4)",
-            }}
-            onMouseEnter={(e) => {
-              if (title && message) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 8px 24px rgba(99, 102, 241, 0.5)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (title && message) {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 20px rgba(99, 102, 241, 0.4)";
-              }
-            }}
+            onClick={handleSendNotification}
           >
-            <Send size={20} />
             Send Notification
-          </button>
+          </CustomButton>
         </div>
-
-        {/* Info Footer */}
-        <div
-          style={{
-            padding: "20px 40px",
-            background: "linear-gradient(135deg, #DBEAFE 0%, #E0E7FF 100%)",
-            borderTop: "1px solid #BFDBFE",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
-            <span style={{ fontSize: "20px" }}>ℹ️</span>
-            <div>
-              <strong
-                style={{
-                  fontSize: "14px",
-                  color: "#1E3A8A",
-                  display: "block",
-                  marginBottom: "4px",
-                }}
-              >
-                How it works:
-              </strong>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "13px",
-                  color: "#1E40AF",
-                  lineHeight: "1.6",
-                }}
-              >
-                Local notifications AND Firebase Campaign notifications both
-                will appear in bell icon.
-                <br /> No localStorage errors in Service Worker anymore.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </CustomCard>
     </div>
   );
 };

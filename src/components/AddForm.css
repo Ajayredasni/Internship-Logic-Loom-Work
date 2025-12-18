@@ -374,62 +374,6 @@
   background: #e0e0e0;
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 20px 0 20px;
-  border-bottom: 1px solid #eee;
-  /* margin-bottom: 20px; */
-}
-
-.modal-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #333;
-}
-
-.modal-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
-  padding: 5px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-close-btn:hover {
-  color: #666;
-  background: #f0f0f0;
-}
-
-.modal-body {
-  padding: 0 20px 20px 20px;
-  overflow: visible;
-}
-
-.modal-section {
-  margin-bottom: 20px;
-}
-
 .form-grid-two-columns {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -510,20 +454,6 @@
   gap: 10px;
 }
 
-/* .btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-  padding: 5px;
-  border-radius: 4px;
-}
-
-.btn-icon:hover {
-  background: #f0f0f0;
-  color: #333;
-} */
-
 .btn-sm {
   padding: 6px 12px;
   background: #4a90e2;
@@ -537,68 +467,27 @@
   background: #3a80d2;
 }
 
-.modal-actions-fixed {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 15px 20px;
-  border-top: 1px solid #eee;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
 /* Scrollbar Styling */
 .select-dropdown::-webkit-scrollbar,
-.modal-content-new::-webkit-scrollbar,
 .addform-card::-webkit-scrollbar {
   width: 8px;
 }
 
 .select-dropdown::-webkit-scrollbar-track,
-.modal-content-new::-webkit-scrollbar-track,
 .addform-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
 
 .select-dropdown::-webkit-scrollbar-thumb,
-.modal-content-new::-webkit-scrollbar-thumb,
 .addform-card::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
 }
 
 .select-dropdown::-webkit-scrollbar-thumb:hover,
-.modal-content-new::-webkit-scrollbar-thumb:hover,
 .addform-card::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
-}
-
-/* Modal ko navbar se upar dikhane ke liye */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1060; /* Navbar (1050) se thoda zyada */
-}
-
-.modal-content-new {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow: visible; /* ✅ disables internal scrollbar */
-  z-index: 1070;
-  position: relative;
 }
 
 /* Ensure the left column (sidebar) has a fixed height matching Drop Zone */

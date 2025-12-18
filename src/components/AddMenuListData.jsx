@@ -5,12 +5,21 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  ArrowRight,
   CheckCircle,
   FileText,
   Trash2,
   PlusCircle,
+  XCircle,
+  Grid,
 } from "react-feather";
 import { formMenuAction } from "./store/FormMenuStoreSlice";
+import CustomAlert from "./custom_component/CustomAlert";
+import Stepper from "./custom_component/Stepper";
+import CustomButton from "./custom_component/CustomButton";
+import CustomCard from "./custom_component/CustomCard";
+import CustomSelect from "./custom_component/CustomSelect";
+import CustomModal from "./custom_component/CustomModal";
 
 function AddMenuListData() {
   const { formId } = useParams();
@@ -23,33 +32,50 @@ function AddMenuListData() {
 
   const [formData, setFormData] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
   const [multiModuleData, setMultiModuleData] = useState({});
   const [multiModuleErrors, setMultiModuleErrors] = useState({});
-
   const [showPassword, setShowPassword] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState({});
-
-  // Image Modal State
+  const [currentStep, setCurrentStep] = useState(0);
   const [imageModal, setImageModal] = useState({
     show: false,
     src: "",
     name: "",
   });
+  const [alert, setAlert] = useState({
+    show: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  const steps = [
+    {
+      label: "Main Form",
+      icon: <FileText size={20} />,
+      description: "Fill main form data",
+    },
+    {
+      label: "Multi-Modules",
+      icon: <Grid size={20} />,
+      description: "Add sub-form data",
+    },
+    {
+      label: "Review & Submit",
+      icon: <Eye size={20} />,
+      description: "Verify and submit",
+    },
+  ];
 
   const selectedForm = formDataStore.find((f) => f.formId === formId);
   const linkedSubForms = formDataStore.filter(
     (f) => f.mainFormName === selectedForm?.formId
   );
-
   const queryParams = new URLSearchParams(location.search);
   const editIndex = queryParams.get("editIndex");
 
   useEffect(() => {
     if (!selectedForm) return;
-
     let initialData = {};
     selectedForm.form?.forEach((field) => {
       if (field.field_type === "checkbox") initialData[field.field_name] = [];
@@ -58,17 +84,11 @@ function AddMenuListData() {
 
     if (editIndex !== null && formMenuStore[formId]?.[editIndex]) {
       const existingEntry = formMenuStore[formId][editIndex];
-      initialData = {
-        ...initialData,
-        ...existingEntry,
-      };
-
+      initialData = { ...initialData, ...existingEntry };
       if (existingEntry.subForms) {
         const loadedMultiModuleData = {};
-
         Object.keys(existingEntry.subForms).forEach((subFormId) => {
           const subFormDataValue = existingEntry.subForms[subFormId];
-
           if (Array.isArray(subFormDataValue)) {
             loadedMultiModuleData[subFormId] = subFormDataValue;
           } else if (
@@ -78,15 +98,16 @@ function AddMenuListData() {
             loadedMultiModuleData[subFormId] = [subFormDataValue];
           }
         });
-
         setMultiModuleData(loadedMultiModuleData);
       }
     }
-
     setFormData(initialData);
     setFieldErrors({});
-    setError("");
   }, [selectedForm, formMenuStore, editIndex, formId]);
+
+  const showAlert = (type, title, message) =>
+    setAlert({ show: true, type, title, message });
+  const closeAlert = () => setAlert({ ...alert, show: false });
 
   const liveValidateField = (
     fieldName,
@@ -175,7 +196,6 @@ function AddMenuListData() {
   const handleFileChange = (e, fieldName, formObj) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) {
       alert("File size should be less than 2MB");
       return;
@@ -189,12 +209,7 @@ function AddMenuListData() {
         size: file.size,
         base64: reader.result,
       };
-
-      setUploadedFiles((prev) => ({
-        ...prev,
-        [fieldName]: fileData,
-      }));
-
+      setUploadedFiles((prev) => ({ ...prev, [fieldName]: fileData }));
       setFormData((prev) => {
         const updated = { ...prev, [fieldName]: fileData };
         liveValidateField(fieldName, fileData, setFieldErrors, formObj);
@@ -207,13 +222,11 @@ function AddMenuListData() {
   const addMultiModuleRow = (subFormId) => {
     const subForm = linkedSubForms.find((f) => f.formId === subFormId);
     if (!subForm) return;
-
     const newRow = {};
     subForm.form?.forEach((field) => {
       if (field.field_type === "checkbox") newRow[field.field_name] = [];
       else newRow[field.field_name] = "";
     });
-
     setMultiModuleData((prev) => ({
       ...prev,
       [subFormId]: [...(prev[subFormId] || []), newRow],
@@ -225,13 +238,10 @@ function AddMenuListData() {
       ...prev,
       [subFormId]: prev[subFormId].filter((_, idx) => idx !== rowIndex),
     }));
-
     setMultiModuleErrors((prev) => {
       const newErrors = { ...prev };
       Object.keys(newErrors).forEach((key) => {
-        if (key.startsWith(`${subFormId}_${rowIndex}_`)) {
-          delete newErrors[key];
-        }
+        if (key.startsWith(`${subFormId}_${rowIndex}_`)) delete newErrors[key];
       });
       return newErrors;
     });
@@ -248,7 +258,6 @@ function AddMenuListData() {
     setMultiModuleData((prev) => {
       const rows = [...(prev[subFormId] || [])];
       rows[rowIndex] = { ...rows[rowIndex], [fieldName]: value };
-
       const errorKey = `${subFormId}_${rowIndex}_${fieldName}`;
       liveValidateField(
         fieldName,
@@ -257,7 +266,6 @@ function AddMenuListData() {
         subForm.form,
         errorKey
       );
-
       return { ...prev, [subFormId]: rows };
     });
   };
@@ -277,7 +285,6 @@ function AddMenuListData() {
         ...rows[rowIndex],
         [fieldName]: checked ? [...arr, value] : arr.filter((v) => v !== value),
       };
-
       const errorKey = `${subFormId}_${rowIndex}_${fieldName}`;
       liveValidateField(
         fieldName,
@@ -286,7 +293,6 @@ function AddMenuListData() {
         subForm.form,
         errorKey
       );
-
       return { ...prev, [subFormId]: rows };
     });
   };
@@ -300,7 +306,6 @@ function AddMenuListData() {
   ) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) {
       alert("File size should be less than 2MB");
       return;
@@ -314,17 +319,11 @@ function AddMenuListData() {
         size: file.size,
         base64: reader.result,
       };
-
       const fileKey = `${subFormId}_${rowIndex}_${fieldName}`;
-      setUploadedFiles((prev) => ({
-        ...prev,
-        [fileKey]: fileData,
-      }));
-
+      setUploadedFiles((prev) => ({ ...prev, [fileKey]: fileData }));
       setMultiModuleData((prev) => {
         const rows = [...(prev[subFormId] || [])];
         rows[rowIndex] = { ...rows[rowIndex], [fieldName]: fileData };
-
         const errorKey = `${subFormId}_${rowIndex}_${fieldName}`;
         liveValidateField(
           fieldName,
@@ -333,7 +332,6 @@ function AddMenuListData() {
           subForm.form,
           errorKey
         );
-
         return { ...prev, [subFormId]: rows };
       });
     };
@@ -348,7 +346,6 @@ function AddMenuListData() {
       const errorKey = prefix
         ? `${prefix}_${field.field_name}`
         : field.field_name;
-
       if (!field.validationRules?.length) return;
 
       const requireRule = field.validationRules.find(
@@ -365,7 +362,6 @@ function AddMenuListData() {
           errors[errorKey] = requireRule.errorMsg || "This field is required";
           return;
         }
-
         if (val && val.toString().trim() !== "") {
           for (const rule of field.validationRules) {
             if (rule.type === "pattern") {
@@ -383,61 +379,73 @@ function AddMenuListData() {
     return Object.keys(errors).length === 0;
   };
 
-  // File Click Handler for Preview
-  // const handleFileClick = (fileData) => {
-  //   if (!fileData) return;
+  const validateCurrentStep = () => {
+    if (currentStep === 0) {
+      return validateFields(selectedForm.form, formData, setFieldErrors);
+    } else if (currentStep === 1) {
+      let allValid = true;
+      linkedSubForms.forEach((subForm) => {
+        const rows = multiModuleData[subForm.formId] || [];
+        rows.forEach((row, idx) => {
+          const prefix = `${subForm.formId}_${idx}`;
+          const isRowValid = validateFields(
+            subForm.form,
+            row,
+            setMultiModuleErrors,
+            prefix
+          );
+          if (!isRowValid) allValid = false;
+        });
+      });
+      return allValid;
+    }
+    return true;
+  };
 
-  //   if (fileData.type?.startsWith("image/")) {
-  //     // Image ko modal mein dikhao
-  //     setImageModal({ show: true, src: fileData.base64, name: fileData.name });
-  //   } else if (
-  //     fileData.type === "application/pdf" ||
-  //     fileData.type ===
-  //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-  //     fileData.type === "application/vnd.ms-excel"
-  //   ) {
-  //     // PDF/Excel ko new tab mein kholo
-  //     const newWindow = window.open();
-  //     newWindow.document.write(`
-  //       <html>
-  //         <head>
-  //           <title>${fileData.name}</title>
-  //         </head>
-  //         <body style="margin: 0;">
-  //           <iframe src="${fileData.base64}" style="width: 100%; height: 100vh; border: none;"></iframe>
-  //         </body>
-  //       </html>
-  //     `);
-  //     newWindow.document.close();
-  //   }
-  // };
-  // File Click Handler for Preview
+  const handleNext = () => {
+    if (validateCurrentStep()) {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else {
+      showAlert(
+        "error",
+        "Validation Error",
+        "Please fill all required fields before proceeding"
+      );
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleStepClick = (step) => {
+    if (step < currentStep) {
+      setCurrentStep(step);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const handleFileClick = (fileData) => {
     if (!fileData) return;
-
     if (fileData.type?.startsWith("image/")) {
-      // Image ko modal mein dikhao
       setImageModal({ show: true, src: fileData.base64, name: fileData.name });
     } else if (fileData.type === "application/pdf") {
-      // PDF ko new tab mein kholo
       const newWindow = window.open();
-      newWindow.document.write(`
-        <html>
-          <head>
-            <title>${fileData.name}</title>
-          </head>
-          <body style="margin: 0;">
-            <iframe src="${fileData.base64}" style="width: 100%; height: 100vh; border: none;"></iframe>
-          </body>
-        </html>
-      `);
+      newWindow.document.write(
+        `<html><head><title>${fileData.name}</title></head><body style="margin: 0;"><iframe src="${fileData.base64}" style="width: 100%; height: 100vh; border: none;"></iframe></body></html>`
+      );
       newWindow.document.close();
     } else if (
       fileData.type ===
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       fileData.type === "application/vnd.ms-excel"
     ) {
-      // Excel ko directly download karo
       const link = document.createElement("a");
       link.href = fileData.base64;
       link.download = fileData.name;
@@ -448,8 +456,17 @@ function AddMenuListData() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    setError("");
+    if (e) e.preventDefault();
+
+    // ✨ CRITICAL FIX: Check if we're on the last step (Review step)
+    if (currentStep !== steps.length - 1) {
+      showAlert(
+        "error",
+        "Error",
+        "Please complete all steps before submitting"
+      );
+      return;
+    }
 
     if (!selectedForm) return;
 
@@ -476,7 +493,6 @@ function AddMenuListData() {
 
     if (isMainValid && allMultiModuleValid) {
       const timestamp = new Date().toISOString();
-
       const subFormsData = {};
       Object.keys(multiModuleData).forEach((subFormId) => {
         if (multiModuleData[subFormId].length > 0) {
@@ -490,7 +506,6 @@ function AddMenuListData() {
           subForms: subFormsData,
           updatedAt: timestamp,
         };
-
         dispatch(
           formMenuAction.editFormDataInMenuStore({
             formId,
@@ -498,7 +513,7 @@ function AddMenuListData() {
             updatedData: finalData,
           })
         );
-        setSuccess("Form updated successfully!");
+        showAlert("success", "Updated!", "Form has been updated successfully!");
       } else {
         const finalData = {
           ...formData,
@@ -511,25 +526,27 @@ function AddMenuListData() {
           createdAt: timestamp,
           updatedAt: timestamp,
         };
-
         dispatch(
-          formMenuAction.addFormDataToMenuStore({
-            formId,
-            formData: finalData,
-          })
+          formMenuAction.addFormDataToMenuStore({ formId, formData: finalData })
         );
-        setSuccess("Form submitted successfully!");
+        showAlert(
+          "success",
+          "Submitted!",
+          "Form has been submitted successfully!"
+        );
       }
-
-      setTimeout(() => navigate(`/app/formMenu-Table/${formId}`), 1000);
+      setTimeout(() => navigate(`/app/formMenu-Table/${formId}`), 1500);
     } else {
-      setError("Please fill all required fields in Main Form & Multi-Modules.");
+      showAlert(
+        "error",
+        "Validation Error",
+        "Please fill all required fields in Main Form & Multi-Modules."
+      );
     }
   };
 
-  const togglePasswordVisibility = (key) => {
+  const togglePasswordVisibility = (key) =>
     setShowPassword((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const renderMainFormFields = () => {
     return selectedForm.form
@@ -540,7 +557,6 @@ function AddMenuListData() {
         if (field.field_type === "file") {
           const fileData =
             uploadedFiles[field.field_name] || formData[field.field_name];
-
           return (
             <div key={field.field_name} className="mb-3 col-md-6">
               {!field.is_hidden && (
@@ -791,41 +807,23 @@ function AddMenuListData() {
             </div>
           );
         }
-
         if (field.field_type === "select") {
           return (
             <div key={field.field_name} className="mb-3 col-md-6">
-              <label
-                className="form-label fw-semibold text-uppercase"
-                style={{ fontSize: "0.875rem", color: "#64748b" }}
-              >
-                {field.label}
-              </label>
-              <select
-                className={`form-select ${
-                  fieldErrors[field.field_name] ? "is-invalid" : ""
-                }`}
+              <CustomSelect
+                label={field.label}
                 name={field.field_name}
+                options={field.options || []}
                 value={value}
                 onChange={handleChange}
-                style={{
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <option value="">{field.placeholder}</option>
-                {field.options?.map((opt, i) => (
-                  <option key={i} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors[field.field_name] && (
-                <small className="text-danger d-block mt-1">
-                  {fieldErrors[field.field_name]}
-                </small>
-              )}
+                placeholder={field.placeholder}
+                error={fieldErrors[field.field_name]}
+                required={field.validationRules?.some(
+                  (r) => r.type === "required" || r.type === "require"
+                )}
+                searchable
+                clearable
+              />
             </div>
           );
         }
@@ -834,98 +832,81 @@ function AddMenuListData() {
       });
   };
 
-  const renderFilePreview = (fileData, compact = false) => {
+  const renderFilePreview = (fileData) => {
     if (!fileData) return null;
-
-    const style = compact
-      ? {
-          maxWidth: "50px",
-          maxHeight: "50px",
-          borderRadius: "4px",
-          objectFit: "cover",
-        }
-      : {
-          maxWidth: "150px",
-          maxHeight: "150px",
-          borderRadius: "8px",
-          border: "2px solid #dee2e6",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        };
-
     return (
       <div
-        className={compact ? "" : "mt-3 p-3 border rounded-3"}
-        style={compact ? {} : { backgroundColor: "#f8f9fa" }}
+        className="mt-3 p-3 border rounded-3"
+        style={{ backgroundColor: "#f8f9fa" }}
       >
-        <div className={compact ? "" : "d-flex align-items-center gap-3"}>
+        <div className="d-flex align-items-center gap-3">
           {fileData.type?.startsWith("image/") && fileData.base64 && (
-            <img src={fileData.base64} alt="Preview" style={style} />
+            <img
+              src={fileData.base64}
+              alt="Preview"
+              style={{
+                maxWidth: "150px",
+                maxHeight: "150px",
+                borderRadius: "8px",
+                border: "2px solid #dee2e6",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            />
           )}
-
           {fileData.type === "application/pdf" && (
             <div
               style={{
-                width: compact ? "50px" : "80px",
-                height: compact ? "50px" : "80px",
+                width: "80px",
+                height: "80px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 background: "linear-gradient(135deg, #dc3545 0%, #c82333 100%)",
-                borderRadius: compact ? "4px" : "12px",
+                borderRadius: "12px",
                 color: "white",
-                fontSize: compact ? "10px" : "12px",
+                fontSize: "12px",
               }}
             >
-              <FileText size={compact ? 16 : 32} />
+              <FileText size={32} />
               <span style={{ marginTop: "2px" }}>PDF</span>
             </div>
           )}
-
           {(fileData.type ===
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
             fileData.type === "application/vnd.ms-excel") && (
             <div
               style={{
-                width: compact ? "50px" : "80px",
-                height: compact ? "50px" : "80px",
+                width: "80px",
+                height: "80px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 background: "linear-gradient(135deg, #28a745 0%, #218838 100%)",
-                borderRadius: compact ? "4px" : "12px",
+                borderRadius: "12px",
                 color: "white",
-                fontSize: compact ? "16px" : "32px",
+                fontSize: "32px",
               }}
             >
               <span>📊</span>
-              {!compact && (
-                <span style={{ fontSize: "10px", marginTop: "4px" }}>
-                  EXCEL
-                </span>
-              )}
+              <span style={{ fontSize: "10px", marginTop: "4px" }}>EXCEL</span>
             </div>
           )}
-
-          {!compact && (
-            <div style={{ flex: 1 }}>
-              <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>
-                {fileData.name}
-              </p>
-              <small className="text-muted">
-                {fileData.size
-                  ? (fileData.size / 1024).toFixed(2) + " KB"
-                  : "Unknown size"}
-              </small>
-            </div>
-          )}
+          <div style={{ flex: 1 }}>
+            <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>
+              {fileData.name}
+            </p>
+            <small className="text-muted">
+              {fileData.size
+                ? (fileData.size / 1024).toFixed(2) + " KB"
+                : "Unknown size"}
+            </small>
+          </div>
         </div>
       </div>
     );
   };
-
-  // PART 2 - Multi Module Table Rendering aur Return Statement
 
   const renderMultiModuleTable = (subForm) => {
     const rows = multiModuleData[subForm.formId] || [];
@@ -1317,15 +1298,15 @@ function AddMenuListData() {
                           </td>
                         );
                       }
-
                       if (field.field_type === "select") {
                         return (
                           <td
                             key={field.field_name}
-                            style={{ padding: "8px", minWidth: "180px" }}
+                            style={{ padding: "8px", minWidth: "200px" }}
                           >
-                            <select
-                              className="form-select form-select-sm"
+                            <CustomSelect
+                              name={field.field_name}
+                              options={field.options || []}
                               value={value}
                               onChange={(e) =>
                                 handleMultiModuleFieldChange(
@@ -1336,20 +1317,12 @@ function AddMenuListData() {
                                   subForm
                                 )
                               }
-                              style={{ fontSize: "0.875rem" }}
-                            >
-                              <option value="">{field.placeholder}</option>
-                              {field.options?.map((opt, i) => (
-                                <option key={i} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                            {multiModuleErrors[errorKey] && (
-                              <small className="text-danger d-block mt-1">
-                                {multiModuleErrors[errorKey]}
-                              </small>
-                            )}
+                              placeholder={field.placeholder}
+                              error={multiModuleErrors[errorKey]}
+                              searchable={false}
+                              clearable={false}
+                              style={{ marginBottom: "0" }}
+                            />
                           </td>
                         );
                       }
@@ -1361,7 +1334,6 @@ function AddMenuListData() {
                       );
                     })}
 
-                    {/* FILE PREVIEW Column with Click Handlers */}
                     {hasFileFields && (
                       <td
                         style={{
@@ -1402,7 +1374,6 @@ function AddMenuListData() {
                                   style={{
                                     textAlign: "center",
                                     cursor: "pointer",
-                                    textDecoration: "none",
                                   }}
                                 >
                                   {fileData.type?.startsWith("image/") &&
@@ -1430,7 +1401,6 @@ function AddMenuListData() {
                                         }
                                       />
                                     )}
-
                                   {fileData.type === "application/pdf" && (
                                     <div
                                       style={{
@@ -1468,7 +1438,6 @@ function AddMenuListData() {
                                       </span>
                                     </div>
                                   )}
-
                                   {(fileData.type ===
                                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                                     fileData.type ===
@@ -1544,201 +1513,243 @@ function AddMenuListData() {
     );
   };
 
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return <div className="row">{renderMainFormFields()}</div>;
+
+      case 1:
+        return (
+          <div className="mt-4">
+            {linkedSubForms.length > 0 ? (
+              linkedSubForms.map((subForm) => renderMultiModuleTable(subForm))
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px",
+                  color: "#64748b",
+                }}
+              >
+                <Grid size={48} style={{ marginBottom: "12px" }} />
+                <p>No sub-forms configured for this form.</p>
+              </div>
+            )}
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="review-section">
+            <div
+              style={{
+                backgroundColor: "#f8f9fa",
+                padding: "20px",
+                borderRadius: "12px",
+                marginBottom: "20px",
+              }}
+            >
+              <h5 style={{ marginBottom: "16px", color: "#1e293b" }}>
+                Main Form Data
+              </h5>
+              <div className="row">
+                {selectedForm.form
+                  .filter((f) => f.is_show_to_form)
+                  .map((field) => (
+                    <div key={field.field_name} className="col-md-6 mb-3">
+                      <div>
+                        <strong style={{ color: "#64748b", fontSize: "12px" }}>
+                          {field.label}:
+                        </strong>
+                        <div style={{ color: "#1e293b", marginTop: "4px" }}>
+                          {formData[field.field_name] || "-"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {linkedSubForms.length > 0 && (
+              <div>
+                <h5 style={{ marginBottom: "16px", color: "#1e293b" }}>
+                  Multi-Modules Data
+                </h5>
+                {linkedSubForms.map((subForm) => {
+                  const rows = multiModuleData[subForm.formId] || [];
+                  return (
+                    <div
+                      key={subForm.formId}
+                      style={{
+                        backgroundColor: "#f8f9fa",
+                        padding: "20px",
+                        borderRadius: "12px",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <h6 style={{ marginBottom: "12px", color: "#4b5563" }}>
+                        {subForm.formName} ({rows.length} rows)
+                      </h6>
+                      {rows.length === 0 ? (
+                        <p style={{ color: "#94a3b8", margin: 0 }}>
+                          No data added
+                        </p>
+                      ) : (
+                        <div style={{ fontSize: "14px", color: "#64748b" }}>
+                          {rows.length} row(s) added
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   if (!selectedForm)
     return <div className="text-center mt-5">Form not found</div>;
 
   return (
     <div className="flex-grow-1 p-3" style={{ backgroundColor: "#f5f6fa" }}>
-      <div
-        className="bg-white rounded-4 shadow-sm mx-auto"
-        style={{
-          maxWidth: "1400px",
-          border: "1px solid #e9ecef",
-          maxHeight: "calc(98vh - 100px)",
-          overflowY: "auto",
-        }}
-      >
-        <div
-          className="p-3 border-bottom"
-          style={{ backgroundColor: "#f8f9fa" }}
-        >
-          <div className="d-flex align-items-center gap-3 mb-2">
-            <div
-              className="d-flex align-items-center justify-content-center rounded-3"
-              style={{
-                width: "48px",
-                height: "48px",
-                background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
-              }}
-            >
-              <FileText size={24} color="white" />
-            </div>
-            <div>
-              <h3
-                className="mb-0 fw-bold"
-                style={{ fontSize: "1.5rem", color: "#1e293b" }}
-              >
-                {editIndex !== null ? "Edit" : "Add"} {selectedForm.formName}
-              </h3>
-              <p className="mb-0 text-muted" style={{ fontSize: "0.875rem" }}>
-                {selectedForm.description}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4">
-          {error && (
-            <div
-              className="alert alert-danger d-flex align-items-center rounded-3 mb-3"
-              style={{
-                backgroundColor: "#fee2e2",
-                color: "#991b1b",
-                border: "1px solid #fecaca",
-              }}
-            >
-              <span style={{ fontSize: "1.2rem", marginRight: "8px" }}>⚠️</span>
-              {error}
-            </div>
-          )}
-          {success && (
-            <div
-              className="alert alert-success d-flex align-items-center rounded-3 mb-3"
-              style={{
-                backgroundColor: "#d1fae5",
-                color: "#065f46",
-                border: "1px solid #a7f3d0",
-              }}
-            >
-              <span style={{ fontSize: "1.2rem", marginRight: "8px" }}>✓</span>
-              {success}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div className="row">{renderMainFormFields()}</div>
-
-            {linkedSubForms.length > 0 && (
-              <div className="mt-4">
-                <hr style={{ borderColor: "#e2e8f0" }} />
-                {linkedSubForms.map((subForm) =>
-                  renderMultiModuleTable(subForm)
-                )}
-              </div>
-            )}
-
-            <div className="d-flex justify-content-center gap-3 mt-4">
-              <button
-                type="submit"
-                className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-3"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  color: "white",
-                  border: "none",
-                  fontWeight: "500",
-                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.25)",
-                }}
-              >
-                <CheckCircle size={18} />
-                {editIndex !== null ? "Update" : "Submit"}
-              </button>
-              <button
-                type="button"
-                className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-3"
-                onClick={() => navigate(-1)}
-                style={{
-                  backgroundColor: "#64748b",
-                  color: "white",
-                  border: "none",
-                  fontWeight: "500",
-                }}
-              >
-                <ArrowLeft size={18} /> Back
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* Image Modal for Preview */}
-      {imageModal.show && (
-        <div
+      <div className="flex-grow-1 p-2" style={{ backgroundColor: "#f5f6fa" }}>
+        <CustomCard
+          variant="elevated"
+          padding="none"
           style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            padding: "20px",
+            maxWidth: "1400px",
+            margin: "0 auto",
+            maxHeight: "calc(98vh - 100px)",
+            overflowY: "auto",
           }}
-          onClick={() => setImageModal({ show: false, src: "", name: "" })}
+          header={
+            // ✨ Header as prop
+            <div
+              className="p-3"
+              style={{
+                backgroundColor: "#f8f9fa",
+                borderBottom: "1px solid #e9ecef",
+              }}
+            >
+              <div className="d-flex align-items-center gap-3 mb-2">
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3"
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    background:
+                      "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+                  }}
+                >
+                  <FileText size={24} color="white" />
+                </div>
+                <div>
+                  <h3
+                    className="mb-0 fw-bold"
+                    style={{ fontSize: "1.5rem", color: "#1e293b" }}
+                  >
+                    {editIndex !== null ? "Edit" : "Add"}{" "}
+                    {selectedForm.formName}
+                  </h3>
+                  <p
+                    className="mb-0 text-muted"
+                    style={{ fontSize: "0.875rem" }}
+                  >
+                    {selectedForm.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
         >
-          <div
-            style={{
-              position: "relative",
-              maxWidth: "90%",
-              maxHeight: "90%",
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "20px",
-              boxShadow: "0 10px 50px rgba(0, 0, 0, 0.5)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                background: "linear-gradient(135deg, #dc3545 0%, #c82333 100%)",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                fontSize: "20px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-                zIndex: 10,
-              }}
-              onClick={() => setImageModal({ show: false, src: "", name: "" })}
-            >
-              ×
-            </button>
-            <img
-              src={imageModal.src}
-              alt={imageModal.name}
-              style={{
-                maxWidth: "100%",
-                maxHeight: "80vh",
-                objectFit: "contain",
-                borderRadius: "8px",
-              }}
+          {/* Form content - keep as is */}
+          <div className="p-4">
+            <CustomAlert
+              type={alert.type}
+              title={alert.title}
+              message={alert.message}
+              show={alert.show}
+              onClose={closeAlert}
+              autoClose={3000}
             />
-            <p
-              style={{
-                textAlign: "center",
-                marginTop: "15px",
-                marginBottom: "0",
-                color: "#64748b",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-            >
-              {imageModal.name}
-            </p>
+
+            <Stepper
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={handleStepClick}
+              clickable={true}
+              orientation="horizontal"
+            />
+
+            <div>
+              {renderStepContent()}
+              <div className="d-flex justify-content-center gap-3 mt-4">
+                {currentStep > 0 && (
+                  <CustomButton
+                    variant="secondary"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={handlePrevious}
+                  >
+                    Previous
+                  </CustomButton>
+                )}
+
+                {currentStep < steps.length - 1 ? (
+                  <CustomButton
+                    variant="primary"
+                    icon={<ArrowRight size={18} />}
+                    iconPosition="right"
+                    onClick={handleNext}
+                  >
+                    Next
+                  </CustomButton>
+                ) : (
+                  <CustomButton
+                    variant="success"
+                    icon={<CheckCircle size={18} />}
+                    onClick={handleSubmit}
+                  >
+                    {editIndex !== null ? "Update" : "Submit"}
+                  </CustomButton>
+                )}
+
+                <CustomButton
+                  variant="secondary"
+                  icon={<XCircle size={18} />}
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </CustomButton>
+              </div>
+            </div>
           </div>
+        </CustomCard>
+      </div>
+      <CustomModal
+        show={imageModal.show}
+        onClose={() => setImageModal({ show: false, src: "", name: "" })}
+        title={imageModal.name}
+        size="xl"
+        closeOnOverlayClick={true}
+      >
+        <div style={{ textAlign: "center" }}>
+          <img
+            src={imageModal.src}
+            alt={imageModal.name}
+            style={{
+              maxWidth: "100%",
+              maxHeight: "70vh",
+              objectFit: "contain",
+              borderRadius: "8px",
+            }}
+          />
         </div>
-      )}
+      </CustomModal>
     </div>
   );
 }
