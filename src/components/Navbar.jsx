@@ -63,7 +63,6 @@ function Navbar({ activeItem, setActiveItem }) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
-    console.log(`🔓 Logging out user: ${currentUser?.email}`);
     dispatch(formDataAction.clearFormData());
     dispatch(formMenuAction.clearFormMenuData());
     dispatch(logout());
@@ -420,7 +419,6 @@ function Navbar({ activeItem, setActiveItem }) {
               >
                 {currentUser.firstName?.charAt(0)}
                 {currentUser.lastName?.charAt(0)}
-                {console.log(currentUser.firstName, currentUser.lastName)}
               </div>
               <div>
                 <div
