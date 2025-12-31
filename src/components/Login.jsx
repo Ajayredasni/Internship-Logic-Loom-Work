@@ -1,4 +1,4 @@
-// src/components/Login.jsx
+// src/components/Login.jsx - UPDATED with User Data Loading
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,6 +11,12 @@ import {
   selectAuthError,
   selectIsAuthenticated,
 } from "./store/authSlice";
+import { formDataAction } from "./store/formDataStoreSlice";
+import { formMenuAction } from "./store/formMenuStoreSlice";
+import {
+  loadFromLocalStorage,
+  loadFromMenuLocalStorage,
+} from "./store/FormData";
 import CustomInput from "./custom_component/CustomInput";
 import CustomAlert from "./custom_component/CustomAlert";
 import CustomButton from "./custom_component/CustomButton";
@@ -100,7 +106,7 @@ function Login() {
       );
 
       if (user) {
-        // Login success
+        // ✅ Login success
         dispatch(
           loginSuccess({
             firstName: user.firstName,
@@ -109,6 +115,14 @@ function Login() {
             loginTime: new Date().toISOString(),
           })
         );
+
+        //  NEW: Load user-specific form data
+        const userFormData = loadFromLocalStorage();
+        dispatch(formDataAction.loadUserData(userFormData));
+
+        //  NEW: Load user-specific menu data
+        const userMenuData = loadFromMenuLocalStorage();
+        dispatch(formMenuAction.loadUserMenuData(userMenuData));
       } else {
         // Login failure
         dispatch(loginFailure("Invalid email or password"));
@@ -174,7 +188,7 @@ function Login() {
             disabled={loading}
           />
 
-          {/* ✅ Submit Button - NEW CustomButton */}
+          {/* Submit Button */}
           <CustomButton
             type="submit"
             variant="primary"
