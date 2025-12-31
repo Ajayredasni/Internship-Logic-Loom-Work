@@ -1,24 +1,22 @@
-// src/components/common/DataTable.jsx
-import React from "react";
-import { PlusCircle, Edit2, Trash2, Eye, Download, Grid } from "react-feather";
+// src/components/custom_component/DataTable.jsx
+import React, { useState, useMemo } from "react"; // New ADDED:  useMemo for state management
+import {
+  PlusCircle,
+  Edit2,
+  Trash2,
+  Eye,
+  Download,
+  Grid,
+  Search, //New ADDED: Search icon
+  ChevronLeft, //New ADDED: Pagination icons
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "react-feather";
 import CustomButton from "./CustomButton";
 
 /**
- * Simple DataTable Component
- *
- * @param {string} title - Table ka title
- * @param {string} subtitle - Table ka subtitle
- * @param {Array} columns - Columns configuration
- * @param {Array} data - Table data (array of objects)
- * @param {Function} onAdd - Add button click handler
- * @param {Function} onEdit - Edit button click handler
- * @param {Function} onView - View button click handler
- * @param {Function} onDelete - Delete button click handler
- * @param {Function} onExport - Export button click handler (optional)
- * @param {string} addButtonText - Add button ka text (default: "Add New")
- * @param {string} exportButtonText - Export button ka text (default: "Export Excel")
- * @param {boolean} showExportButton - Export button dikhana hai? (default: true)
- * @param {string} emptyMessage - Empty state message
+ * Advanced DataTable Component with Search & Pagination
  */
 const DataTable = ({
   title = "Data Table",
@@ -34,9 +32,65 @@ const DataTable = ({
   exportButtonText = "Export Excel",
   showExportButton = true,
   emptyMessage = "No data available",
+  searchable = true, // New ADDED: Enable/disable search
+  paginated = true, // New ADDED: Enable/disable pagination
+  defaultPageSize = 10, // New ADDED: Default rows per page
 }) => {
+  // ==================== New NEW STATE - Search & Pagination ====================
+  const [searchTerm, setSearchTerm] = useState(""); // Search input value
+  const [currentPage, setCurrentPage] = useState(1); // Current page number
+  const [pageSize, setPageSize] = useState(defaultPageSize); // Rows per page
+
+  // ==================== New NEW - SEARCH LOGIC ====================
+  // Filter data based on search term across all columns
+  const filteredData = useMemo(() => {
+    if (!searchable || !searchTerm.trim()) return data;
+
+    return data.filter((row) => {
+      return columns.some((column) => {
+        const value = row[column.field];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+      });
+    });
+  }, [data, searchTerm, columns, searchable]);
+
+  // ==================== New NEW - PAGINATION LOGIC ====================
+  // Slice filtered data based on current page and page size
+  const paginatedData = useMemo(() => {
+    if (!paginated) return filteredData;
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, pageSize, paginated]);
+
+  // ==================== New NEW - PAGINATION CALCULATIONS ====================
+  const totalPages = Math.ceil(filteredData.length / pageSize); // Total pages
+  const startEntry =
+    filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0; // First entry number
+  const endEntry = Math.min(currentPage * pageSize, filteredData.length); // Last entry number
+
+  // ==================== New NEW - HANDLERS ====================
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   // Empty state check
   const isEmpty = !data || data.length === 0;
+  const isFiltered = searchTerm.trim() && filteredData.length === 0; // New ADDED: Check if search returns no results
 
   return (
     <div
@@ -131,6 +185,108 @@ const DataTable = ({
           </div>
         </div>
 
+        {/* ==================== New NEW - SEARCH & PAGINATION CONTROLS ==================== */}
+        {!isEmpty && (searchable || paginated) && (
+          <div
+            style={{
+              padding: "16px",
+              display: "flex",
+              flexDirection: window.innerWidth < 768 ? "column" : "row",
+              justifyContent: "space-between",
+              alignItems: window.innerWidth < 768 ? "flex-start" : "center",
+              gap: "12px",
+              borderBottom: "1px solid #f1f5f9",
+            }}
+          >
+            {/* New NEW: Search Bar */}
+            {searchable && (
+              <div style={{ position: "relative", flex: 1, maxWidth: "400px" }}>
+                <Search
+                  size={18}
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#64748b",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 40px",
+                    border: "2px solid #e2e8f0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "all 0.3s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#2563eb";
+                    e.target.style.boxShadow =
+                      "0 0 0 3px rgba(37, 99, 235, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+              </div>
+            )}
+
+            {/* New NEW: Page Size Selector */}
+            {paginated && (
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span style={{ fontSize: "14px", color: "#64748b" }}>
+                  Show:
+                </span>
+                <select
+                  value={pageSize}
+                  onChange={handlePageSizeChange}
+                  style={{
+                    padding: "8px 12px",
+                    border: "2px solid #e2e8f0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    cursor: "pointer",
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span style={{ fontSize: "14px", color: "#64748b" }}>
+                  entries
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ==================== New NEW - DATA INFO ==================== */}
+        {!isEmpty && paginated && (
+          <div
+            style={{
+              padding: "12px 16px",
+              fontSize: "14px",
+              color: "#64748b",
+              borderBottom: "1px solid #f1f5f9",
+            }}
+          >
+            Showing {startEntry} to {endEntry} of {filteredData.length} entries
+            {searchTerm && ` (filtered from ${data.length} total entries)`}
+          </div>
+        )}
+
         {/* ==================== TABLE SECTION ==================== */}
         <div style={{ padding: "16px", overflowX: "auto" }}>
           <table
@@ -178,7 +334,6 @@ const DataTable = ({
                   </th>
                 ))}
 
-                {/* Actions column agar koi bhi action ho */}
                 {(onEdit || onView || onDelete) && (
                   <th
                     style={{
@@ -199,120 +354,121 @@ const DataTable = ({
               </tr>
             </thead>
 
-            {/* Table Body */}
             <tbody>
-              {!isEmpty ? (
-                data.map((row, rowIndex) => (
-                  <tr
-                    key={rowIndex}
-                    style={{
-                      borderBottom: "1px solid #f1f5f9",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f8fafc";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                    }}
-                  >
-                    {/* Sr.No Column */}
-                    <td
+              {/* New CHANGED: Use paginatedData instead of data */}
+              {!isEmpty && !isFiltered ? (
+                paginatedData.map((row, rowIndex) => {
+                  // New CHANGED: Calculate actual index based on pagination
+                  const actualIndex = (currentPage - 1) * pageSize + rowIndex;
+                  return (
+                    <tr
+                      key={actualIndex}
                       style={{
-                        padding: "12px",
-                        color: "#64748b",
-                        fontWeight: "500",
-                        fontSize: "14px",
+                        borderBottom: "1px solid #f1f5f9",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#f8fafc";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
                       }}
                     >
-                      {rowIndex + 1}
-                    </td>
-
-                    {/* Data Columns */}
-                    {columns.map((column, colIndex) => (
+                      {/* New CHANGED: Show actual index instead of rowIndex */}
                       <td
-                        key={colIndex}
                         style={{
                           padding: "12px",
-                          color: "#1e293b",
+                          color: "#64748b",
+                          fontWeight: "500",
                           fontSize: "14px",
-                          fontWeight:
-                            column.field === "formName" ? "500" : "400",
                         }}
                       >
-                        {/* Agar custom render function hai to use karo */}
-                        {column.render
-                          ? column.render(row[column.field], row, rowIndex)
-                          : row[column.field] || "-"}
+                        {actualIndex + 1}
                       </td>
-                    ))}
 
-                    {/* Action Buttons */}
-                    {(onEdit || onView || onDelete) && (
-                      <td style={{ padding: "12px" }}>
-                        <div
+                      {/* Data Columns */}
+                      {columns.map((column, colIndex) => (
+                        <td
+                          key={colIndex}
                           style={{
-                            display: "flex",
-                            gap: "8px",
-                            justifyContent: "center",
+                            padding: "12px",
+                            color: "#1e293b",
+                            fontSize: "14px",
+                            fontWeight:
+                              column.field === "formName" ? "500" : "400",
                           }}
                         >
-                          {onEdit && (
-                            <CustomButton
-                              variant="warning"
-                              outline
-                              size="sm"
-                              icon={<Edit2 size={16} />}
-                              onClick={() => onEdit(row, rowIndex)}
-                              title="Edit"
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                padding: "0",
-                              }}
-                            />
-                          )}
+                          {column.render
+                            ? column.render(row[column.field], row, actualIndex)
+                            : row[column.field] || "-"}
+                        </td>
+                      ))}
 
-                          {/* View Button */}
-                          {onView && (
-                            <CustomButton
-                              variant="info"
-                              outline
-                              size="sm"
-                              icon={<Eye size={16} />}
-                              onClick={() => onView(row, rowIndex)}
-                              title="View"
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                padding: "0",
-                              }}
-                            />
-                          )}
+                      {/* Action Buttons */}
+                      {(onEdit || onView || onDelete) && (
+                        <td style={{ padding: "12px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {onEdit && (
+                              <CustomButton
+                                variant="warning"
+                                outline
+                                size="sm"
+                                icon={<Edit2 size={16} />}
+                                onClick={() => onEdit(row, actualIndex)} // New CHANGED: Pass actualIndex
+                                title="Edit"
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  padding: "0",
+                                }}
+                              />
+                            )}
 
-                          {/* Delete Button */}
-                          {onDelete && (
-                            <CustomButton
-                              variant="danger"
-                              outline
-                              size="sm"
-                              icon={<Trash2 size={16} />}
-                              onClick={() => onDelete(row, rowIndex)}
-                              title="Delete"
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                padding: "0",
-                              }}
-                            />
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))
+                            {onView && (
+                              <CustomButton
+                                variant="info"
+                                outline
+                                size="sm"
+                                icon={<Eye size={16} />}
+                                onClick={() => onView(row, actualIndex)} // New CHANGED: Pass actualIndex
+                                title="View"
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  padding: "0",
+                                }}
+                              />
+                            )}
+
+                            {onDelete && (
+                              <CustomButton
+                                variant="danger"
+                                outline
+                                size="sm"
+                                icon={<Trash2 size={16} />}
+                                onClick={() => onDelete(row, actualIndex)} // New CHANGED: Pass actualIndex
+                                title="Delete"
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  padding: "0",
+                                }}
+                              />
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
               ) : (
-                // Empty State
+                /* New CHANGED: Better empty state with search feedback */
                 <tr>
                   <td
                     colSpan={columns.length + 2}
@@ -337,11 +493,19 @@ const DataTable = ({
                           justifyContent: "center",
                         }}
                       >
-                        <Grid size={40} color="#cbd5e1" />
+                        {/* New NEW: Different icon for filtered vs empty */}
+                        {isFiltered ? (
+                          <Search size={40} color="#cbd5e1" />
+                        ) : (
+                          <Grid size={40} color="#cbd5e1" />
+                        )}
                       </div>
                       <div>
                         <h5 style={{ margin: "0 0 5px 0", color: "#64748b" }}>
-                          {emptyMessage}
+                          {/* New NEW: Different message for search results */}
+                          {isFiltered
+                            ? `No results found for "${searchTerm}"`
+                            : emptyMessage}
                         </h5>
                         <p
                           style={{
@@ -350,10 +514,12 @@ const DataTable = ({
                             color: "#94a3b8",
                           }}
                         >
-                          Get started by adding your first entry
+                          {isFiltered
+                            ? "Try different keywords"
+                            : "Get started by adding your first entry"}
                         </p>
                       </div>
-                      {onAdd && (
+                      {onAdd && !isFiltered && (
                         <CustomButton
                           variant="success"
                           icon={<PlusCircle size={18} />}
@@ -370,6 +536,199 @@ const DataTable = ({
             </tbody>
           </table>
         </div>
+
+        {/* ==================== New NEW - PAGINATION CONTROLS ==================== */}
+        {!isEmpty && paginated && totalPages > 1 && (
+          <div
+            style={{
+              padding: "16px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "8px",
+              borderTop: "1px solid #f1f5f9",
+            }}
+          >
+            {/* First Page */}
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: "8px 12px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "8px",
+                backgroundColor: "#fff",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                opacity: currentPage === 1 ? 0.5 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 1) {
+                  e.currentTarget.style.borderColor = "#2563eb";
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }}
+            >
+              <ChevronsLeft size={18} />
+            </button>
+
+            {/* Previous Page */}
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: "8px 12px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "8px",
+                backgroundColor: "#fff",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                opacity: currentPage === 1 ? 0.5 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 1) {
+                  e.currentTarget.style.borderColor = "#2563eb";
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            {/* Page Numbers */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                // New NEW: Smart page number calculation
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    style={{
+                      padding: "8px 14px",
+                      border: "2px solid",
+                      borderColor:
+                        currentPage === pageNum ? "#2563eb" : "#e2e8f0",
+                      borderRadius: "8px",
+                      backgroundColor:
+                        currentPage === pageNum ? "#2563eb" : "#fff",
+                      color: currentPage === pageNum ? "#fff" : "#1e293b",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: currentPage === pageNum ? "600" : "400",
+                      transition: "all 0.2s ease",
+                      minWidth: "40px",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentPage !== pageNum) {
+                        e.currentTarget.style.borderColor = "#2563eb";
+                        e.currentTarget.style.backgroundColor = "#f8fafc";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentPage !== pageNum) {
+                        e.currentTarget.style.borderColor = "#e2e8f0";
+                        e.currentTarget.style.backgroundColor = "#fff";
+                      }
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next Page */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: "8px 12px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "8px",
+                backgroundColor: "#fff",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                opacity: currentPage === totalPages ? 0.5 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== totalPages) {
+                  e.currentTarget.style.borderColor = "#2563eb";
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }}
+            >
+              <ChevronRight size={18} />
+            </button>
+
+            {/* Last Page */}
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: "8px 12px",
+                border: "2px solid #e2e8f0",
+                borderRadius: "8px",
+                backgroundColor: "#fff",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                opacity: currentPage === totalPages ? 0.5 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== totalPages) {
+                  e.currentTarget.style.borderColor = "#2563eb";
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }}
+            >
+              <ChevronsRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
