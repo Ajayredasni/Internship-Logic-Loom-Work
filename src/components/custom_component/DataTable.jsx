@@ -1,5 +1,5 @@
 // src/components/custom_component/DataTable.jsx
-import React, { useState, useMemo } from "react"; // New ADDED:  useMemo for state management
+import React, { useState, useMemo } from "react";
 import {
   PlusCircle,
   Edit2,
@@ -7,8 +7,8 @@ import {
   Eye,
   Download,
   Grid,
-  Search, //New ADDED: Search icon
-  ChevronLeft, //New ADDED: Pagination icons
+  Search,
+  ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
@@ -17,6 +17,7 @@ import CustomButton from "./CustomButton";
 
 /**
  * Advanced DataTable Component with Search & Pagination
+ * ✅ FIXED: White gap issue when scrolling table
  */
 const DataTable = ({
   title = "Data Table",
@@ -32,17 +33,16 @@ const DataTable = ({
   exportButtonText = "Export Excel",
   showExportButton = true,
   emptyMessage = "No data available",
-  searchable = true, // New ADDED: Enable/disable search
-  paginated = true, // New ADDED: Enable/disable pagination
-  defaultPageSize = 10, // New ADDED: Default rows per page
+  searchable = true,
+  paginated = true,
+  defaultPageSize = 10,
 }) => {
-  // ==================== New NEW STATE - Search & Pagination ====================
-  const [searchTerm, setSearchTerm] = useState(""); // Search input value
-  const [currentPage, setCurrentPage] = useState(1); // Current page number
-  const [pageSize, setPageSize] = useState(defaultPageSize); // Rows per page
+  // ==================== STATE - Search & Pagination ====================
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
 
-  // ==================== New NEW - SEARCH LOGIC ====================
-  // Filter data based on search term across all columns
+  // ==================== SEARCH LOGIC ====================
   const filteredData = useMemo(() => {
     if (!searchable || !searchTerm.trim()) return data;
 
@@ -55,8 +55,7 @@ const DataTable = ({
     });
   }, [data, searchTerm, columns, searchable]);
 
-  // ==================== New NEW - PAGINATION LOGIC ====================
-  // Slice filtered data based on current page and page size
+  // ==================== PAGINATION LOGIC ====================
   const paginatedData = useMemo(() => {
     if (!paginated) return filteredData;
 
@@ -65,21 +64,21 @@ const DataTable = ({
     return filteredData.slice(startIndex, endIndex);
   }, [filteredData, currentPage, pageSize, paginated]);
 
-  // ==================== New NEW - PAGINATION CALCULATIONS ====================
-  const totalPages = Math.ceil(filteredData.length / pageSize); // Total pages
+  // ==================== PAGINATION CALCULATIONS ====================
+  const totalPages = Math.ceil(filteredData.length / pageSize);
   const startEntry =
-    filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0; // First entry number
-  const endEntry = Math.min(currentPage * pageSize, filteredData.length); // Last entry number
+    filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endEntry = Math.min(currentPage * pageSize, filteredData.length);
 
-  // ==================== New NEW - HANDLERS ====================
+  // ==================== HANDLERS ====================
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page on search
+    setCurrentPage(1);
   };
 
   const handlePageSizeChange = (e) => {
     setPageSize(Number(e.target.value));
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
@@ -90,13 +89,13 @@ const DataTable = ({
 
   // Empty state check
   const isEmpty = !data || data.length === 0;
-  const isFiltered = searchTerm.trim() && filteredData.length === 0; // New ADDED: Check if search returns no results
+  const isFiltered = searchTerm.trim() && filteredData.length === 0;
 
   return (
     <div
       style={{
         flexGrow: 1,
-        padding: "16px",
+        padding: "5px 16px 5px 16px",
         backgroundColor: "#f5f6fa",
       }}
     >
@@ -185,7 +184,7 @@ const DataTable = ({
           </div>
         </div>
 
-        {/* ==================== New NEW - SEARCH & PAGINATION CONTROLS ==================== */}
+        {/* ==================== SEARCH & PAGINATION CONTROLS ==================== */}
         {!isEmpty && (searchable || paginated) && (
           <div
             style={{
@@ -198,7 +197,7 @@ const DataTable = ({
               borderBottom: "1px solid #f1f5f9",
             }}
           >
-            {/* New NEW: Search Bar */}
+            {/* Search Bar */}
             {searchable && (
               <div style={{ position: "relative", flex: 1, maxWidth: "400px" }}>
                 <Search
@@ -238,7 +237,7 @@ const DataTable = ({
               </div>
             )}
 
-            {/* New NEW: Page Size Selector */}
+            {/* Page Size Selector */}
             {paginated && (
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
@@ -272,7 +271,7 @@ const DataTable = ({
           </div>
         )}
 
-        {/* ==================== New NEW - DATA INFO ==================== */}
+        {/* ==================== DATA INFO ==================== */}
         {!isEmpty && paginated && (
           <div
             style={{
@@ -287,18 +286,28 @@ const DataTable = ({
           </div>
         )}
 
-        {/* ==================== TABLE SECTION ==================== */}
-        <div style={{ padding: "16px", overflowX: "auto" }}>
+        {/* ==================== ✅ FIXED TABLE SECTION - WHITE GAP REMOVED ==================== */}
+        <div
+          className="custom-table-scroll"
+          style={{
+            // ✅ CHANGE 1: padding: "16px" REMOVE KIYA - Ye white gap create kar raha tha
+            overflowX: "auto",
+            maxHeight: "calc(100vh - 380px)",
+            overflowY: "auto",
+            position: "relative",
+          }}
+        >
           <table
             style={{
               width: "100%",
+              // ✅ CHANGE 2: borderCollapse "separate" se "collapse" kiya - Proper sticky header ke liye
               borderCollapse: "collapse",
               minWidth: "1000px",
             }}
           >
-            {/* Table Header */}
+            {/* ✅ CHANGE 3: <thead> se position: sticky remove kiya, direct <th> par lagaya */}
             <thead>
-              <tr style={{ backgroundColor: "#f8f9fa" }}>
+              <tr>
                 <th
                   style={{
                     padding: "12px",
@@ -310,6 +319,11 @@ const DataTable = ({
                     letterSpacing: "0.5px",
                     borderBottom: "2px solid #e2e8f0",
                     whiteSpace: "nowrap",
+                    // ✅ CHANGE 4: Sticky header ke liye ye properties add ki
+                    backgroundColor: "#f8f9fa",
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 10,
                   }}
                 >
                   Sr.No
@@ -328,6 +342,11 @@ const DataTable = ({
                       letterSpacing: "0.5px",
                       borderBottom: "2px solid #e2e8f0",
                       whiteSpace: "nowrap",
+                      // ✅ CHANGE 5: Har column header par sticky properties
+                      backgroundColor: "#f8f9fa",
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
                     }}
                   >
                     {column.header}
@@ -346,6 +365,11 @@ const DataTable = ({
                       letterSpacing: "0.5px",
                       borderBottom: "2px solid #e2e8f0",
                       whiteSpace: "nowrap",
+                      // ✅ CHANGE 6: Actions column bhi sticky
+                      backgroundColor: "#f8f9fa",
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
                     }}
                   >
                     Actions
@@ -355,10 +379,8 @@ const DataTable = ({
             </thead>
 
             <tbody>
-              {/* New CHANGED: Use paginatedData instead of data */}
               {!isEmpty && !isFiltered ? (
                 paginatedData.map((row, rowIndex) => {
-                  // New CHANGED: Calculate actual index based on pagination
                   const actualIndex = (currentPage - 1) * pageSize + rowIndex;
                   return (
                     <tr
@@ -374,7 +396,6 @@ const DataTable = ({
                         e.currentTarget.style.backgroundColor = "transparent";
                       }}
                     >
-                      {/* New CHANGED: Show actual index instead of rowIndex */}
                       <td
                         style={{
                           padding: "12px",
@@ -420,7 +441,7 @@ const DataTable = ({
                                 outline
                                 size="sm"
                                 icon={<Edit2 size={16} />}
-                                onClick={() => onEdit(row, actualIndex)} // New CHANGED: Pass actualIndex
+                                onClick={() => onEdit(row, actualIndex)}
                                 title="Edit"
                                 style={{
                                   width: "36px",
@@ -436,7 +457,7 @@ const DataTable = ({
                                 outline
                                 size="sm"
                                 icon={<Eye size={16} />}
-                                onClick={() => onView(row, actualIndex)} // New CHANGED: Pass actualIndex
+                                onClick={() => onView(row, actualIndex)}
                                 title="View"
                                 style={{
                                   width: "36px",
@@ -452,7 +473,7 @@ const DataTable = ({
                                 outline
                                 size="sm"
                                 icon={<Trash2 size={16} />}
-                                onClick={() => onDelete(row, actualIndex)} // New CHANGED: Pass actualIndex
+                                onClick={() => onDelete(row, actualIndex)}
                                 title="Delete"
                                 style={{
                                   width: "36px",
@@ -468,7 +489,6 @@ const DataTable = ({
                   );
                 })
               ) : (
-                /* New CHANGED: Better empty state with search feedback */
                 <tr>
                   <td
                     colSpan={columns.length + 2}
@@ -493,7 +513,6 @@ const DataTable = ({
                           justifyContent: "center",
                         }}
                       >
-                        {/* New NEW: Different icon for filtered vs empty */}
                         {isFiltered ? (
                           <Search size={40} color="#cbd5e1" />
                         ) : (
@@ -502,7 +521,6 @@ const DataTable = ({
                       </div>
                       <div>
                         <h5 style={{ margin: "0 0 5px 0", color: "#64748b" }}>
-                          {/* New NEW: Different message for search results */}
                           {isFiltered
                             ? `No results found for "${searchTerm}"`
                             : emptyMessage}
@@ -537,11 +555,11 @@ const DataTable = ({
           </table>
         </div>
 
-        {/* ==================== New NEW - PAGINATION CONTROLS ==================== */}
+        {/* ==================== PAGINATION CONTROLS ==================== */}
         {!isEmpty && paginated && totalPages > 1 && (
           <div
             style={{
-              padding: "16px",
+              padding: "8px 16px 8px 16px",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -618,7 +636,6 @@ const DataTable = ({
               }}
             >
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                // New NEW: Smart page number calculation
                 let pageNum;
                 if (totalPages <= 5) {
                   pageNum = i + 1;
@@ -730,6 +747,35 @@ const DataTable = ({
           </div>
         )}
       </div>
+
+      {/* ✅ CUSTOM SCROLLBAR STYLING */}
+      <style>{`
+        .custom-table-scroll::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        .custom-table-scroll::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+
+        .custom-table-scroll::-webkit-scrollbar-thumb {
+          background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+          border-radius: 10px;
+          transition: background 0.3s ease;
+        }
+
+        .custom-table-scroll::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        }
+
+        /* For Firefox */
+        .custom-table-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #2563eb #f1f5f9;
+        }
+      `}</style>
     </div>
   );
 };

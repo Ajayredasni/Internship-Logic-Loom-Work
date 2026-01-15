@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable";
 import CustomButton from "./custom_component/CustomButton";
 import CustomCard from "./custom_component/CustomCard";
 import CustomModal from "./custom_component/CustomModal";
+import CustomFilePreview from "./custom_component/CustomFilePreview"; // ✅ NEW: Add this line
 
 const MenuFormView = () => {
   const location = useLocation();
@@ -17,13 +18,6 @@ const MenuFormView = () => {
   const allForms = location.state?.allForms || [];
 
   const [expandedSections, setExpandedSections] = useState({});
-
-  // Image Modal State
-  const [imageModal, setImageModal] = useState({
-    show: false,
-    src: "",
-    name: "",
-  });
 
   if (!formData || !entryData) {
     return (
@@ -55,39 +49,6 @@ const MenuFormView = () => {
       return JSON.stringify(value);
     }
     return String(value);
-  };
-
-  // File Click Handler for Preview
-  const handleFileClick = (fileData) => {
-    if (!fileData) return;
-
-    if (fileData.type?.startsWith("image/")) {
-      setImageModal({ show: true, src: fileData.base64, name: fileData.name });
-    } else if (fileData.type === "application/pdf") {
-      const newWindow = window.open();
-      newWindow.document.write(`
-        <html>
-          <head>
-            <title>${fileData.name}</title>
-          </head>
-          <body style="margin: 0;">
-            <iframe src="${fileData.base64}" style="width: 100%; height: 100vh; border: none;"></iframe>
-          </body>
-        </html>
-      `);
-      newWindow.document.close();
-    } else if (
-      fileData.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      fileData.type === "application/vnd.ms-excel"
-    ) {
-      const link = document.createElement("a");
-      link.href = fileData.base64;
-      link.download = fileData.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
   };
 
   const handleExportPDF = () => {
@@ -674,11 +635,11 @@ const MenuFormView = () => {
                                     )}
                                   </td>
                                 ))}
-
+                                {/* // ✅ In Multi-Module table FILE PREVIEW section */}
                                 {hasFileFields && (
                                   <td
                                     style={{
-                                      ...tableCellStyle,
+                                      padding: "8px",
                                       textAlign: "center",
                                       verticalAlign: "middle",
                                     }}
@@ -694,147 +655,23 @@ const MenuFormView = () => {
 
                                       if (filesInRow.length === 0) {
                                         return (
-                                          <span style={{ color: "#94a3b8" }}>
+                                          <span className="text-secondary">
                                             -
                                           </span>
                                         );
                                       }
 
                                       return (
-                                        <div
-                                          style={{
-                                            display: "flex",
-                                            gap: "10px",
-                                            flexWrap: "wrap",
-                                            justifyContent: "center",
-                                          }}
-                                        >
+                                        <div className="d-flex gap-2 flex-wrap justify-content-center">
                                           {filesInRow.map(
                                             (fileData, fileIdx) => (
-                                              <div
+                                              <CustomFilePreview
                                                 key={fileIdx}
-                                                onClick={() =>
-                                                  handleFileClick(fileData)
-                                                }
-                                                style={{
-                                                  textAlign: "center",
-                                                  cursor: "pointer",
-                                                  textDecoration: "none",
-                                                }}
-                                              >
-                                                {fileData.type?.startsWith(
-                                                  "image/"
-                                                ) &&
-                                                  fileData.base64 && (
-                                                    <img
-                                                      src={fileData.base64}
-                                                      alt="Preview"
-                                                      style={{
-                                                        width: "80px",
-                                                        height: "80px",
-                                                        objectFit: "cover",
-                                                        borderRadius: "6px",
-                                                        border:
-                                                          "2px solid #e2e8f0",
-                                                        boxShadow:
-                                                          "0 2px 4px rgba(0,0,0,0.1)",
-                                                        transition:
-                                                          "transform 0.2s",
-                                                      }}
-                                                      onMouseEnter={(e) =>
-                                                        (e.target.style.transform =
-                                                          "scale(1.05)")
-                                                      }
-                                                      onMouseLeave={(e) =>
-                                                        (e.target.style.transform =
-                                                          "scale(1)")
-                                                      }
-                                                    />
-                                                  )}
-
-                                                {fileData.type ===
-                                                  "application/pdf" && (
-                                                  <div
-                                                    style={{
-                                                      width: "80px",
-                                                      height: "80px",
-                                                      display: "flex",
-                                                      flexDirection: "column",
-                                                      alignItems: "center",
-                                                      justifyContent: "center",
-                                                      background:
-                                                        "linear-gradient(135deg, #dc3545 0%, #c82333 100%)",
-                                                      borderRadius: "8px",
-                                                      color: "white",
-                                                      boxShadow:
-                                                        "0 2px 4px rgba(220,53,69,0.3)",
-                                                      transition:
-                                                        "transform 0.2s",
-                                                    }}
-                                                    onMouseEnter={(e) =>
-                                                      (e.currentTarget.style.transform =
-                                                        "scale(1.05)")
-                                                    }
-                                                    onMouseLeave={(e) =>
-                                                      (e.currentTarget.style.transform =
-                                                        "scale(1)")
-                                                    }
-                                                  >
-                                                    <FileText size={32} />
-                                                    <span
-                                                      style={{
-                                                        fontSize: "10px",
-                                                        marginTop: "4px",
-                                                      }}
-                                                    >
-                                                      PDF
-                                                    </span>
-                                                  </div>
-                                                )}
-
-                                                {(fileData.type ===
-                                                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-                                                  fileData.type ===
-                                                    "application/vnd.ms-excel") && (
-                                                  <div
-                                                    style={{
-                                                      width: "80px",
-                                                      height: "80px",
-                                                      display: "flex",
-                                                      flexDirection: "column",
-                                                      alignItems: "center",
-                                                      justifyContent: "center",
-                                                      background:
-                                                        "linear-gradient(135deg, #28a745 0%, #218838 100%)",
-                                                      borderRadius: "8px",
-                                                      color: "white",
-                                                      fontSize: "32px",
-                                                      boxShadow:
-                                                        "0 2px 4px rgba(40,167,69,0.3)",
-                                                      transition:
-                                                        "transform 0.2s",
-                                                    }}
-                                                    onMouseEnter={(e) =>
-                                                      (e.currentTarget.style.transform =
-                                                        "scale(1.05)")
-                                                    }
-                                                    onMouseLeave={(e) =>
-                                                      (e.currentTarget.style.transform =
-                                                        "scale(1)")
-                                                    }
-                                                  >
-                                                    <span>📊</span>
-                                                    <span
-                                                      style={{
-                                                        fontSize: "10px",
-                                                        marginTop: "4px",
-                                                      }}
-                                                    >
-                                                      EXCEL
-                                                    </span>
-                                                  </div>
-                                                )}
-                                              </div>
+                                                fileData={fileData}
+                                                variant="thumbnail"
+                                                showModal={true}
+                                                showDownload={true}
+                                              />
                                             )
                                           )}
                                         </div>
@@ -855,26 +692,6 @@ const MenuFormView = () => {
           </div>
         )}
       </CustomCard>
-      <CustomModal
-        show={imageModal.show}
-        onClose={() => setImageModal({ show: false, src: "", name: "" })}
-        title={imageModal.name}
-        size="xl"
-        closeOnOverlayClick={true}
-      >
-        <div style={{ textAlign: "center" }}>
-          <img
-            src={imageModal.src}
-            alt={imageModal.name}
-            style={{
-              maxWidth: "100%",
-              maxHeight: "70vh",
-              objectFit: "contain",
-              borderRadius: "8px",
-            }}
-          />
-        </div>
-      </CustomModal>
     </div>
   );
 };

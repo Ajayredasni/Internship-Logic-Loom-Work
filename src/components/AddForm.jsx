@@ -8,7 +8,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Stepper from "./custom_component/Stepper"; //
 import CustomAlert from "./custom_component/CustomAlert";
 import CustomButton from "./custom_component/CustomButton";
-import CustomCard from "./custom_component/CustomCard";
 import CustomSelect from "./custom_component/CustomSelect";
 import CustomModal from "./custom_component/CustomModal";
 import "./AddForm.css";
@@ -17,8 +16,6 @@ import {
   XCircle,
   PlusCircle,
   Trash2,
-  ChevronDown,
-  ChevronUp,
   X,
   Edit,
   Check,

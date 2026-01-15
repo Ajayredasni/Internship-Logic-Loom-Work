@@ -20,6 +20,8 @@ import CustomButton from "./custom_component/CustomButton";
 import CustomCard from "./custom_component/CustomCard";
 import CustomSelect from "./custom_component/CustomSelect";
 import CustomModal from "./custom_component/CustomModal";
+import CustomFileUpload from "./custom_component/CustomFileUpload"; // ✅ NEW: Add this line
+import CustomFilePreview from "./custom_component/CustomFilePreview"; // ✅ NEW: Add this line
 
 function AddMenuListData() {
   const { formId } = useParams();
@@ -37,11 +39,6 @@ function AddMenuListData() {
   const [showPassword, setShowPassword] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
-  const [imageModal, setImageModal] = useState({
-    show: false,
-    src: "",
-    name: "",
-  });
   const [alert, setAlert] = useState({
     show: false,
     type: "success",
@@ -192,31 +189,13 @@ function AddMenuListData() {
       return updated;
     });
   };
-
-  const handleFileChange = (e, fieldName, formObj) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("File size should be less than 2MB");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const fileData = {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        base64: reader.result,
-      };
-      setUploadedFiles((prev) => ({ ...prev, [fieldName]: fileData }));
-      setFormData((prev) => {
-        const updated = { ...prev, [fieldName]: fileData };
-        liveValidateField(fieldName, fileData, setFieldErrors, formObj);
-        return updated;
-      });
-    };
-    reader.readAsDataURL(file);
+  const handleFileUpload = (fieldName, fileData) => {
+    setUploadedFiles((prev) => ({ ...prev, [fieldName]: fileData }));
+    setFormData((prev) => {
+      const updated = { ...prev, [fieldName]: fileData };
+      liveValidateField(fieldName, fileData, setFieldErrors, selectedForm.form);
+      return updated;
+    });
   };
 
   const addMultiModuleRow = (subFormId) => {
@@ -296,46 +275,27 @@ function AddMenuListData() {
       return { ...prev, [subFormId]: rows };
     });
   };
-
-  const handleMultiModuleFileChange = (
-    e,
+  const handleMultiModuleFileUpload = (
     subFormId,
     rowIndex,
     fieldName,
-    subForm
+    fileData
   ) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("File size should be less than 2MB");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const fileData = {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        base64: reader.result,
-      };
-      const fileKey = `${subFormId}_${rowIndex}_${fieldName}`;
-      setUploadedFiles((prev) => ({ ...prev, [fileKey]: fileData }));
-      setMultiModuleData((prev) => {
-        const rows = [...(prev[subFormId] || [])];
-        rows[rowIndex] = { ...rows[rowIndex], [fieldName]: fileData };
-        const errorKey = `${subFormId}_${rowIndex}_${fieldName}`;
-        liveValidateField(
-          fieldName,
-          fileData,
-          setMultiModuleErrors,
-          subForm.form,
-          errorKey
-        );
-        return { ...prev, [subFormId]: rows };
-      });
-    };
-    reader.readAsDataURL(file);
+    const fileKey = `${subFormId}_${rowIndex}_${fieldName}`;
+    setUploadedFiles((prev) => ({ ...prev, [fileKey]: fileData }));
+    setMultiModuleData((prev) => {
+      const rows = [...(prev[subFormId] || [])];
+      rows[rowIndex] = { ...rows[rowIndex], [fieldName]: fileData };
+      const errorKey = `${subFormId}_${rowIndex}_${fieldName}`;
+      liveValidateField(
+        fieldName,
+        fileData,
+        setMultiModuleErrors,
+        selectedForm.form,
+        errorKey
+      );
+      return { ...prev, [subFormId]: rows };
+    });
   };
 
   const validateFields = (fields, data, setErrors, prefix = "") => {
@@ -428,30 +388,6 @@ function AddMenuListData() {
     if (step < currentStep) {
       setCurrentStep(step);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const handleFileClick = (fileData) => {
-    if (!fileData) return;
-    if (fileData.type?.startsWith("image/")) {
-      setImageModal({ show: true, src: fileData.base64, name: fileData.name });
-    } else if (fileData.type === "application/pdf") {
-      const newWindow = window.open();
-      newWindow.document.write(
-        `<html><head><title>${fileData.name}</title></head><body style="margin: 0;"><iframe src="${fileData.base64}" style="width: 100%; height: 100vh; border: none;"></iframe></body></html>`
-      );
-      newWindow.document.close();
-    } else if (
-      fileData.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      fileData.type === "application/vnd.ms-excel"
-    ) {
-      const link = document.createElement("a");
-      link.href = fileData.base64;
-      link.download = fileData.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     }
   };
 
@@ -553,44 +489,30 @@ function AddMenuListData() {
       .filter((field) => field.is_show_to_form)
       .map((field) => {
         const value = formData[field.field_name] ?? "";
-
+        // ✅ NEW CODE: Replace with CustomFileUpload + CustomFilePreview
         if (field.field_type === "file") {
           const fileData =
             uploadedFiles[field.field_name] || formData[field.field_name];
           return (
             <div key={field.field_name} className="mb-3 col-md-6">
-              {!field.is_hidden && (
-                <label
-                  className="form-label fw-semibold text-uppercase"
-                  style={{ fontSize: "0.875rem", color: "#64748b" }}
-                >
-                  {field.label}
-                </label>
-              )}
-              <input
-                type="file"
-                className={`form-control ${
-                  fieldErrors[field.field_name] ? "is-invalid" : ""
-                }`}
+              <CustomFileUpload
                 name={field.field_name}
-                onChange={(e) =>
-                  handleFileChange(e, field.field_name, selectedForm.form)
-                }
-                accept="image/*,.pdf,.xlsx,.xls"
-                hidden={field.is_hidden}
-                style={{
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: fieldErrors[field.field_name]
-                    ? "1px solid #dc3545"
-                    : "1px solid #e2e8f0",
-                }}
+                label={field.label}
+                value={fileData}
+                onChange={handleFileUpload}
+                error={fieldErrors[field.field_name]}
+                required={field.validationRules?.some(
+                  (r) => r.type === "required" || r.type === "require"
+                )}
+                disabled={field.is_hidden}
               />
-              {fileData && renderFilePreview(fileData)}
-              {fieldErrors[field.field_name] && (
-                <small className="text-danger d-block mt-1">
-                  {fieldErrors[field.field_name]}
-                </small>
+              {fileData && (
+                <CustomFilePreview
+                  fileData={fileData}
+                  variant="card"
+                  showModal={true}
+                  showDownload={true}
+                />
               )}
             </div>
           );
@@ -831,83 +753,6 @@ function AddMenuListData() {
         return null;
       });
   };
-
-  const renderFilePreview = (fileData) => {
-    if (!fileData) return null;
-    return (
-      <div
-        className="mt-3 p-3 border rounded-3"
-        style={{ backgroundColor: "#f8f9fa" }}
-      >
-        <div className="d-flex align-items-center gap-3">
-          {fileData.type?.startsWith("image/") && fileData.base64 && (
-            <img
-              src={fileData.base64}
-              alt="Preview"
-              style={{
-                maxWidth: "150px",
-                maxHeight: "150px",
-                borderRadius: "8px",
-                border: "2px solid #dee2e6",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            />
-          )}
-          {fileData.type === "application/pdf" && (
-            <div
-              style={{
-                width: "80px",
-                height: "80px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "linear-gradient(135deg, #dc3545 0%, #c82333 100%)",
-                borderRadius: "12px",
-                color: "white",
-                fontSize: "12px",
-              }}
-            >
-              <FileText size={32} />
-              <span style={{ marginTop: "2px" }}>PDF</span>
-            </div>
-          )}
-          {(fileData.type ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-            fileData.type === "application/vnd.ms-excel") && (
-            <div
-              style={{
-                width: "80px",
-                height: "80px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "linear-gradient(135deg, #28a745 0%, #218838 100%)",
-                borderRadius: "12px",
-                color: "white",
-                fontSize: "32px",
-              }}
-            >
-              <span>📊</span>
-              <span style={{ fontSize: "10px", marginTop: "4px" }}>EXCEL</span>
-            </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>
-              {fileData.name}
-            </p>
-            <small className="text-muted">
-              {fileData.size
-                ? (fileData.size / 1024).toFixed(2) + " KB"
-                : "Unknown size"}
-            </small>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderMultiModuleTable = (subForm) => {
     const rows = multiModuleData[subForm.formId] || [];
     const visibleFields = subForm.form?.filter((f) => f.is_show_to_form) || [];
@@ -1014,48 +859,37 @@ function AddMenuListData() {
                     >
                       {rowIndex + 1}
                     </td>
-
                     {visibleFields.map((field) => {
                       const errorKey = `${subForm.formId}_${rowIndex}_${field.field_name}`;
                       const value = row[field.field_name] ?? "";
                       const fileKey = `${subForm.formId}_${rowIndex}_${field.field_name}`;
                       const fileData =
                         uploadedFiles[fileKey] || row[field.field_name];
-
+                      // ✅ NEW CODE: Replace with CustomFileUpload (no preview variant)
                       if (field.field_type === "file") {
                         return (
                           <td
                             key={field.field_name}
-                            style={{ padding: "8px", minWidth: "200px" }}
+                            style={{ padding: "8px", minWidth: "250px" }}
                           >
-                            <input
-                              type="file"
-                              className="form-control form-control-sm"
-                              onChange={(e) =>
-                                handleMultiModuleFileChange(
-                                  e,
+                            <CustomFileUpload
+                              name={field.field_name}
+                              label=""
+                              value={fileData}
+                              onChange={(fieldName, data) =>
+                                handleMultiModuleFileUpload(
                                   subForm.formId,
                                   rowIndex,
-                                  field.field_name,
-                                  subForm
+                                  fieldName,
+                                  data
                                 )
                               }
-                              accept="image/*,.pdf,.xlsx,.xls"
-                              style={{ fontSize: "0.875rem" }}
+                              error={multiModuleErrors[errorKey]}
+                              required={field.validationRules?.some(
+                                (r) => r.type === "required"
+                              )}
+                              showPreview={false}
                             />
-                            {fileData && (
-                              <small
-                                className="text-muted d-block mt-1"
-                                style={{ fontSize: "0.75rem" }}
-                              >
-                                {fileData.name}
-                              </small>
-                            )}
-                            {multiModuleErrors[errorKey] && (
-                              <small className="text-danger d-block mt-1">
-                                {multiModuleErrors[errorKey]}
-                              </small>
-                            )}
                           </td>
                         );
                       }
@@ -1333,7 +1167,7 @@ function AddMenuListData() {
                         </td>
                       );
                     })}
-
+                    {/*  ✅ NEW CODE: Replace with CustomFilePreview (thumbnail variant) */}
                     {hasFileFields && (
                       <td
                         style={{
@@ -1356,137 +1190,24 @@ function AddMenuListData() {
                             .filter(Boolean);
 
                           if (filesInRow.length === 0)
-                            return <span style={{ color: "#94a3b8" }}>-</span>;
+                            return <span className="text-secondary">-</span>;
 
                           return (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "10px",
-                                flexWrap: "wrap",
-                                justifyContent: "center",
-                              }}
-                            >
+                            <div className="d-flex gap-2 flex-wrap justify-content-center">
                               {filesInRow.map((fileData, idx) => (
-                                <div
+                                <CustomFilePreview
                                   key={idx}
-                                  onClick={() => handleFileClick(fileData)}
-                                  style={{
-                                    textAlign: "center",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {fileData.type?.startsWith("image/") &&
-                                    fileData.base64 && (
-                                      <img
-                                        src={fileData.base64}
-                                        alt="Preview"
-                                        style={{
-                                          width: "80px",
-                                          height: "80px",
-                                          objectFit: "cover",
-                                          borderRadius: "6px",
-                                          border: "2px solid #e2e8f0",
-                                          boxShadow:
-                                            "0 2px 4px rgba(0,0,0,0.1)",
-                                          transition: "transform 0.2s",
-                                        }}
-                                        onMouseEnter={(e) =>
-                                          (e.target.style.transform =
-                                            "scale(1.05)")
-                                        }
-                                        onMouseLeave={(e) =>
-                                          (e.target.style.transform =
-                                            "scale(1)")
-                                        }
-                                      />
-                                    )}
-                                  {fileData.type === "application/pdf" && (
-                                    <div
-                                      style={{
-                                        width: "80px",
-                                        height: "80px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        background:
-                                          "linear-gradient(135deg, #dc3545 0%, #c82333 100%)",
-                                        borderRadius: "8px",
-                                        color: "white",
-                                        boxShadow:
-                                          "0 2px 4px rgba(220,53,69,0.3)",
-                                        transition: "transform 0.2s",
-                                      }}
-                                      onMouseEnter={(e) =>
-                                        (e.currentTarget.style.transform =
-                                          "scale(1.05)")
-                                      }
-                                      onMouseLeave={(e) =>
-                                        (e.currentTarget.style.transform =
-                                          "scale(1)")
-                                      }
-                                    >
-                                      <FileText size={32} />
-                                      <span
-                                        style={{
-                                          fontSize: "10px",
-                                          marginTop: "4px",
-                                        }}
-                                      >
-                                        PDF
-                                      </span>
-                                    </div>
-                                  )}
-                                  {(fileData.type ===
-                                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-                                    fileData.type ===
-                                      "application/vnd.ms-excel") && (
-                                    <div
-                                      style={{
-                                        width: "80px",
-                                        height: "80px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        background:
-                                          "linear-gradient(135deg, #28a745 0%, #218838 100%)",
-                                        borderRadius: "8px",
-                                        color: "white",
-                                        fontSize: "32px",
-                                        boxShadow:
-                                          "0 2px 4px rgba(40,167,69,0.3)",
-                                        transition: "transform 0.2s",
-                                      }}
-                                      onMouseEnter={(e) =>
-                                        (e.currentTarget.style.transform =
-                                          "scale(1.05)")
-                                      }
-                                      onMouseLeave={(e) =>
-                                        (e.currentTarget.style.transform =
-                                          "scale(1)")
-                                      }
-                                    >
-                                      <span>📊</span>
-                                      <span
-                                        style={{
-                                          fontSize: "10px",
-                                          marginTop: "4px",
-                                        }}
-                                      >
-                                        EXCEL
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
+                                  fileData={fileData}
+                                  variant="thumbnail"
+                                  showModal={true}
+                                  showDownload={false}
+                                />
                               ))}
                             </div>
                           );
                         })()}
                       </td>
                     )}
-
                     <td style={{ padding: "8px", textAlign: "center" }}>
                       <button
                         type="button"
@@ -1730,26 +1451,6 @@ function AddMenuListData() {
           </div>
         </CustomCard>
       </div>
-      <CustomModal
-        show={imageModal.show}
-        onClose={() => setImageModal({ show: false, src: "", name: "" })}
-        title={imageModal.name}
-        size="xl"
-        closeOnOverlayClick={true}
-      >
-        <div style={{ textAlign: "center" }}>
-          <img
-            src={imageModal.src}
-            alt={imageModal.name}
-            style={{
-              maxWidth: "100%",
-              maxHeight: "70vh",
-              objectFit: "contain",
-              borderRadius: "8px",
-            }}
-          />
-        </div>
-      </CustomModal>
     </div>
   );
 }
