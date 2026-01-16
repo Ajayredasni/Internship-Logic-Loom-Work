@@ -1,4 +1,4 @@
-// src/components/custom_component/DataTable.jsx
+// src/components/custom_component/DataTable.jsx - UPDATED VERSION WITH CustomPagination
 import React, { useState, useMemo } from "react";
 import {
   PlusCircle,
@@ -8,16 +8,12 @@ import {
   Download,
   Grid,
   Search,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
 } from "react-feather";
 import CustomButton from "./CustomButton";
+import CustomPagination from "./CustomPagination";
 
 /**
  * Advanced DataTable Component with Search & Pagination
- * ✅ FIXED: White gap issue when scrolling table
  */
 const DataTable = ({
   title = "Data Table",
@@ -66,19 +62,16 @@ const DataTable = ({
 
   // ==================== PAGINATION CALCULATIONS ====================
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const startEntry =
-    filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
-  const endEntry = Math.min(currentPage * pageSize, filteredData.length);
 
   // ==================== HANDLERS ====================
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on search
   };
 
-  const handlePageSizeChange = (e) => {
-    setPageSize(Number(e.target.value));
-    setCurrentPage(1);
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1); // Reset to first page on page size change
   };
 
   const handlePageChange = (page) => {
@@ -184,8 +177,9 @@ const DataTable = ({
           </div>
         </div>
 
-        {/* ==================== SEARCH & PAGINATION CONTROLS ==================== */}
-        {!isEmpty && (searchable || paginated) && (
+        {/* ==================== SEARCH CONTROLS ==================== */}
+        {/*  UPDATED: Removed page size selector - now in CustomPagination */}
+        {!isEmpty && searchable && (
           <div
             style={{
               padding: "16px",
@@ -198,99 +192,48 @@ const DataTable = ({
             }}
           >
             {/* Search Bar */}
-            {searchable && (
-              <div style={{ position: "relative", flex: 1, maxWidth: "400px" }}>
-                <Search
-                  size={18}
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#64748b",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px 10px 40px",
-                    border: "2px solid #e2e8f0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#2563eb";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.boxShadow = "none";
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Page Size Selector */}
-            {paginated && (
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                <span style={{ fontSize: "14px", color: "#64748b" }}>
-                  Show:
-                </span>
-                <select
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  style={{
-                    padding: "8px 12px",
-                    border: "2px solid #e2e8f0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    cursor: "pointer",
-                    backgroundColor: "#fff",
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span style={{ fontSize: "14px", color: "#64748b" }}>
-                  entries
-                </span>
-              </div>
-            )}
+            <div style={{ position: "relative", flex: 1, maxWidth: "400px" }}>
+              <Search
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#64748b",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px 10px 40px",
+                  border: "2px solid #e2e8f0",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  outline: "none",
+                  transition: "all 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#2563eb";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e2e8f0";
+                  e.target.style.boxShadow = "none";
+                }}
+              />
+            </div>
           </div>
         )}
 
-        {/* ==================== DATA INFO ==================== */}
-        {!isEmpty && paginated && (
-          <div
-            style={{
-              padding: "12px 16px",
-              fontSize: "14px",
-              color: "#64748b",
-              borderBottom: "1px solid #f1f5f9",
-            }}
-          >
-            Showing {startEntry} to {endEntry} of {filteredData.length} entries
-            {searchTerm && ` (filtered from ${data.length} total entries)`}
-          </div>
-        )}
-
-        {/* ==================== ✅ FIXED TABLE SECTION - WHITE GAP REMOVED ==================== */}
+        {/* ==================== TABLE SECTION ==================== */}
         <div
           className="custom-table-scroll"
           style={{
-            // ✅ CHANGE 1: padding: "16px" REMOVE KIYA - Ye white gap create kar raha tha
             overflowX: "auto",
             maxHeight: "calc(100vh - 380px)",
             overflowY: "auto",
@@ -300,12 +243,10 @@ const DataTable = ({
           <table
             style={{
               width: "100%",
-              // ✅ CHANGE 2: borderCollapse "separate" se "collapse" kiya - Proper sticky header ke liye
               borderCollapse: "collapse",
               minWidth: "1000px",
             }}
           >
-            {/* ✅ CHANGE 3: <thead> se position: sticky remove kiya, direct <th> par lagaya */}
             <thead>
               <tr>
                 <th
@@ -319,7 +260,6 @@ const DataTable = ({
                     letterSpacing: "0.5px",
                     borderBottom: "2px solid #e2e8f0",
                     whiteSpace: "nowrap",
-                    // ✅ CHANGE 4: Sticky header ke liye ye properties add ki
                     backgroundColor: "#f8f9fa",
                     position: "sticky",
                     top: 0,
@@ -342,7 +282,6 @@ const DataTable = ({
                       letterSpacing: "0.5px",
                       borderBottom: "2px solid #e2e8f0",
                       whiteSpace: "nowrap",
-                      // ✅ CHANGE 5: Har column header par sticky properties
                       backgroundColor: "#f8f9fa",
                       position: "sticky",
                       top: 0,
@@ -365,7 +304,6 @@ const DataTable = ({
                       letterSpacing: "0.5px",
                       borderBottom: "2px solid #e2e8f0",
                       whiteSpace: "nowrap",
-                      // ✅ CHANGE 6: Actions column bhi sticky
                       backgroundColor: "#f8f9fa",
                       position: "sticky",
                       top: 0,
@@ -555,200 +493,27 @@ const DataTable = ({
           </table>
         </div>
 
-        {/* ==================== PAGINATION CONTROLS ==================== */}
-        {!isEmpty && paginated && totalPages > 1 && (
-          <div
-            style={{
-              padding: "8px 16px 8px 16px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
-              borderTop: "1px solid #f1f5f9",
-            }}
-          >
-            {/* First Page */}
-            <button
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "2px solid #e2e8f0",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                opacity: currentPage === 1 ? 0.5 : 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (currentPage !== 1) {
-                  e.currentTarget.style.borderColor = "#2563eb";
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.backgroundColor = "#fff";
-              }}
-            >
-              <ChevronsLeft size={18} />
-            </button>
-
-            {/* Previous Page */}
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "2px solid #e2e8f0",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                opacity: currentPage === 1 ? 0.5 : 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (currentPage !== 1) {
-                  e.currentTarget.style.borderColor = "#2563eb";
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.backgroundColor = "#fff";
-              }}
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            {/* Page Numbers */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    style={{
-                      padding: "8px 14px",
-                      border: "2px solid",
-                      borderColor:
-                        currentPage === pageNum ? "#2563eb" : "#e2e8f0",
-                      borderRadius: "8px",
-                      backgroundColor:
-                        currentPage === pageNum ? "#2563eb" : "#fff",
-                      color: currentPage === pageNum ? "#fff" : "#1e293b",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: currentPage === pageNum ? "600" : "400",
-                      transition: "all 0.2s ease",
-                      minWidth: "40px",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (currentPage !== pageNum) {
-                        e.currentTarget.style.borderColor = "#2563eb";
-                        e.currentTarget.style.backgroundColor = "#f8fafc";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (currentPage !== pageNum) {
-                        e.currentTarget.style.borderColor = "#e2e8f0";
-                        e.currentTarget.style.backgroundColor = "#fff";
-                      }
-                    }}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Next Page */}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "2px solid #e2e8f0",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                opacity: currentPage === totalPages ? 0.5 : 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (currentPage !== totalPages) {
-                  e.currentTarget.style.borderColor = "#2563eb";
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.backgroundColor = "#fff";
-              }}
-            >
-              <ChevronRight size={18} />
-            </button>
-
-            {/* Last Page */}
-            <button
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "2px solid #e2e8f0",
-                borderRadius: "8px",
-                backgroundColor: "#fff",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                opacity: currentPage === totalPages ? 0.5 : 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (currentPage !== totalPages) {
-                  e.currentTarget.style.borderColor = "#2563eb";
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.backgroundColor = "#fff";
-              }}
-            >
-              <ChevronsRight size={18} />
-            </button>
+        {/* ====================  NEW: CUSTOM PAGINATION COMPONENT ==================== */}
+        {!isEmpty && paginated && (
+          <div style={{ padding: "16px", borderTop: "1px solid #f1f5f9" }}>
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalEntries={filteredData.length}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              pageSizeOptions={[10, 25, 50, 100]}
+              showPageSizeSelector={true}
+              showEntriesInfo={true}
+              maxVisiblePages={5}
+              size="md"
+            />
           </div>
         )}
       </div>
 
-      {/* ✅ CUSTOM SCROLLBAR STYLING */}
+      {/*  CUSTOM SCROLLBAR STYLING (Unchanged) */}
       <style>{`
         .custom-table-scroll::-webkit-scrollbar {
           width: 10px;
