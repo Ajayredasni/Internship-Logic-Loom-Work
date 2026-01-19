@@ -7,6 +7,7 @@ import { formMenuAction } from "./store/FormMenuStoreSlice";
 import { exportFormsToExcel } from "./store/exportUtils";
 import DataTable from "./custom_component/DataTable";
 import CustomAlert from "./custom_component/CustomAlert";
+import CustomBadge from "./custom_component/CustomBadge";
 
 const FormDataTableContent = () => {
   const navigate = useNavigate();
@@ -31,22 +32,14 @@ const FormDataTableContent = () => {
       header: "Form Name",
       field: "formName",
     },
+
     {
       header: "Is Main Form",
       field: "isMainForm",
       render: (value) => (
-        <span
-          style={{
-            padding: "4px 12px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: value ? "#dbeafe" : "#f3f4f6",
-            color: value ? "#1e40af" : "#6b7280",
-          }}
-        >
+        <CustomBadge variant={value ? "info" : "secondary"} size="sm">
           {value ? "Yes" : "No"}
-        </span>
+        </CustomBadge>
       ),
     },
     {
@@ -58,22 +51,14 @@ const FormDataTableContent = () => {
       header: "Description",
       field: "description",
     },
+
     {
       header: "Status",
       field: "active",
       render: (value) => (
-        <span
-          style={{
-            padding: "4px 12px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: value ? "#d1fae5" : "#fee2e2",
-            color: value ? "#065f46" : "#991b1b",
-          }}
-        >
+        <CustomBadge variant={value ? "success" : "danger"} size="sm">
           {value ? "Active" : "Inactive"}
-        </span>
+        </CustomBadge>
       ),
     },
   ];
@@ -105,7 +90,7 @@ const FormDataTableContent = () => {
       showAlert(
         "success",
         "Deleted!",
-        `Form "${row.formName}" has been deleted successfully.`
+        `Form "${row.formName}" has been deleted successfully.`,
       );
     }
   };
@@ -116,13 +101,13 @@ const FormDataTableContent = () => {
       showAlert(
         "success",
         "Exported!",
-        "Excel file has been downloaded successfully."
+        "Excel file has been downloaded successfully.",
       );
     } catch (error) {
       showAlert(
         "error",
         "Export Failed",
-        "Failed to export Excel file. Please try again."
+        "Failed to export Excel file. Please try again.",
       );
     }
   };
@@ -152,9 +137,9 @@ const FormDataTableContent = () => {
         exportButtonText="Export Excel"
         showExportButton={true}
         emptyMessage="No forms available"
-        searchable={true} // ✅ ADDED: Enable search functionality
-        paginated={true} // ✅ ADDED: Enable pagination
-        defaultPageSize={10} // ✅ ADDED: Default 10 rows per page
+        searchable={true} //  ADDED: Enable search functionality
+        paginated={true} //  ADDED: Enable pagination
+        defaultPageSize={10} // ADDED: Default 10 rows per page
       />
     </div>
   );

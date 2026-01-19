@@ -10,6 +10,7 @@ import CustomAlert from "./custom_component/CustomAlert";
 import CustomButton from "./custom_component/CustomButton";
 import CustomSelect from "./custom_component/CustomSelect";
 import CustomModal from "./custom_component/CustomModal";
+import CustomBadge from "./custom_component/CustomBadge";
 import "./AddForm.css";
 
 import {
@@ -133,7 +134,7 @@ const AddForm = () => {
   };
 
   const mainFormsNameList = formDataStore.filter(
-    (f) => f.formType === "Main Form"
+    (f) => f.formType === "Main Form",
   );
 
   // Map field types to icons
@@ -463,7 +464,7 @@ const AddForm = () => {
       showAlert(
         "success",
         "Field Updated!",
-        "Field has been updated successfully!"
+        "Field has been updated successfully!",
       );
     } else {
       // Adding new field — give it a unique id
@@ -478,7 +479,7 @@ const AddForm = () => {
       showAlert(
         "success",
         "Field Added!",
-        "Field has been added successfully!"
+        "Field has been added successfully!",
       );
     }
 
@@ -868,7 +869,19 @@ const AddForm = () => {
             </div>
 
             <div className="column">
-              <h4 className="section-title">DROP ZONE</h4>
+              <h4 className="section-title">
+                DROP ZONE
+                {formDetails.form.length > 0 && (
+                  <CustomBadge
+                    variant="info"
+                    size="sm"
+                    pill
+                    style={{ marginLeft: "12px" }}
+                  >
+                    {formDetails.form.length}
+                  </CustomBadge>
+                )}
+              </h4>
               <div className="drop-zone">
                 {formDetails.form.length === 0 ? (
                   <p className="dropzone-placeholder">
@@ -878,9 +891,12 @@ const AddForm = () => {
                   <div className="dropped-components-grid">
                     {formDetails.form.map((f, idx) => (
                       <div key={idx} className="dropped-item-grid">
-                        <div className="field-type-pill">
+                        {/* <div className="field-type-pill">
                           {getFieldTypeName(f.field_type)}
-                        </div>
+                        </div> */}
+                        <CustomBadge variant="primary" size="sm">
+                          {getFieldTypeName(f.field_type)}
+                        </CustomBadge>
                         <span className="field-badge">{idx + 1}</span>
                         <span className="dropped-item-text">{f.label}</span>
                         <div className="dropped-item-actions">
@@ -1153,7 +1169,7 @@ const AddForm = () => {
             Constraint
           </div>
           {["radio", "select", "checkbox"].includes(
-            selectedField?.field_type
+            selectedField?.field_type,
           ) && (
             <div
               className={`tab-item ${activeTab === "data" ? "active" : ""}`}
@@ -1655,7 +1671,7 @@ const AddForm = () => {
                         name="validationRuleType"
                         options={[
                           ...(!fieldConfig.validationRules.some(
-                            (r) => r.type === "required"
+                            (r) => r.type === "required",
                           )
                             ? [{ value: "required", label: "Required" }]
                             : []),
@@ -1693,8 +1709,8 @@ const AddForm = () => {
                           tempRule.type === "required"
                             ? "true or false"
                             : tempRule.type === "pattern"
-                            ? "Regex pattern"
-                            : "Value"
+                              ? "Regex pattern"
+                              : "Value"
                         }
                         value={tempRule.value}
                         onChange={(e) => {

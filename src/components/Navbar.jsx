@@ -6,6 +6,7 @@ import { formDataAction } from "./store/formDataStoreSlice";
 import { formMenuAction } from "./store/formMenuStoreSlice";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "./custom_component/CustomButton";
+import CustomBadge from "./custom_component/CustomBadge";
 
 function Navbar({ activeItem, setActiveItem }) {
   const navigate = useNavigate();
@@ -206,26 +207,19 @@ function Navbar({ activeItem, setActiveItem }) {
             >
               <Bell size={20} />
               {unreadCount > 0 && (
-                <span
+                <CustomBadge
+                  variant="danger"
+                  size="xs"
+                  pill
+                  count={unreadCount}
+                  maxCount={99}
                   style={{
                     position: "absolute",
                     top: "-4px",
                     right: "-4px",
-                    background: "#ef4444",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "18px",
-                    height: "18px",
-                    fontSize: "10px",
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                     border: "2px solid white",
                   }}
-                >
-                  {unreadCount}
-                </span>
+                />
               )}
             </button>
 
@@ -505,26 +499,19 @@ function Navbar({ activeItem, setActiveItem }) {
             >
               <Bell size={18} />
               {unreadCount > 0 && (
-                <span
+                <CustomBadge
+                  variant="danger"
+                  size="xs"
+                  pill
+                  count={unreadCount}
+                  maxCount={99}
                   style={{
                     position: "absolute",
                     top: "-3px",
                     right: "-3px",
-                    background: "#ef4444",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "16px",
-                    height: "16px",
-                    fontSize: "9px",
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                     border: "2px solid white",
                   }}
-                >
-                  {unreadCount}
-                </span>
+                />
               )}
             </button>
           </div>

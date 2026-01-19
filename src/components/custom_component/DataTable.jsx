@@ -11,6 +11,7 @@ import {
 } from "react-feather";
 import CustomButton from "./CustomButton";
 import CustomPagination from "./CustomPagination";
+import CustomBadge from "./CustomBadge";
 
 /**
  * Advanced DataTable Component with Search & Pagination
@@ -130,7 +131,7 @@ const DataTable = ({
               <Grid size={24} color="white" />
             </div>
             <div>
-              <h2
+              {/* <h2
                 style={{
                   margin: 0,
                   fontSize: "1.5rem",
@@ -139,7 +140,24 @@ const DataTable = ({
                 }}
               >
                 {title}
-              </h2>
+              </h2> */}
+              <div className="d-flex align-items-center gap-2">
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "1.5rem",
+                    fontWeight: "700",
+                    color: "#1e293b",
+                  }}
+                >
+                  {title}
+                </h2>
+                {!isEmpty && (
+                  <CustomBadge variant="secondary" size="sm" pill>
+                    {data.length}
+                  </CustomBadge>
+                )}
+              </div>
               {subtitle && (
                 <p
                   style={{

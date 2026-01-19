@@ -39,14 +39,14 @@ const CustomFileUpload = ({
 
     if (!file) return;
 
-    // ✅ File size validation
+    //  File size validation
     if (file.size > maxSize * 1024 * 1024) {
       alert(`File size should be less than ${maxSize}MB`);
       e.target.value = "";
       return;
     }
 
-    // ✅ Read file and convert to base64
+    //  Read file and convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
       const fileData = {
@@ -76,9 +76,9 @@ const CustomFileUpload = ({
   };
 
   return (
-    // ✅ BOOTSTRAP: mb-3 (margin-bottom)
+    //  BOOTSTRAP: mb-3 (margin-bottom)
     <div className={`mb-3 ${className}`}>
-      {/* ✅ BOOTSTRAP: form-label, fw-semibold */}
+      {/*  BOOTSTRAP: form-label, fw-semibold */}
       {label && (
         <label className="form-label fw-semibold">
           {label}
@@ -86,7 +86,7 @@ const CustomFileUpload = ({
         </label>
       )}
 
-      {/* ✅ BOOTSTRAP: border, border-2, rounded-3, p-4, text-center, position-relative */}
+      {/*  BOOTSTRAP: border, border-2, rounded-3, p-4, text-center, position-relative */}
       <div
         className={`
           border border-2 rounded-3 p-4 text-center position-relative
@@ -95,13 +95,13 @@ const CustomFileUpload = ({
           ${!disabled && !value ? "hover-border-primary" : ""}
         `}
         style={{
-          // ✅ MINIMAL CUSTOM CSS: Only for cursor and transition
+          // MINIMAL CUSTOM CSS: Only for cursor and transition
           cursor: disabled ? "not-allowed" : "pointer",
           transition: "all 0.3s ease",
           borderStyle: "dashed",
         }}
       >
-        {/* ✅ Hidden file input */}
+        {/*  Hidden file input */}
         <input
           type="file"
           id={`file-upload-${name}`}
@@ -113,29 +113,29 @@ const CustomFileUpload = ({
           {...rest}
         />
 
-        {/* ✅ Display based on file state */}
+        {/*  Display based on file state */}
         {!value ? (
-          // ✅ No file selected - BOOTSTRAP CLASSES
+          //  No file selected - BOOTSTRAP CLASSES
           <label
             htmlFor={`file-upload-${name}`}
             className="d-block m-0"
             style={{ cursor: disabled ? "not-allowed" : "pointer" }}
           >
-            {/* ✅ BOOTSTRAP: mb-2 */}
+            {/*  BOOTSTRAP: mb-2 */}
             <Upload size={40} className="text-secondary mb-2" />
 
-            {/* ✅ BOOTSTRAP: mb-2, text-secondary, fs-6 */}
+            {/*  BOOTSTRAP: mb-2, text-secondary, fs-6 */}
             <p className="mb-2 text-secondary fs-6">
               Click to upload or drag and drop
             </p>
 
-            {/* ✅ BOOTSTRAP: mb-0, text-muted, small */}
+            {/*  BOOTSTRAP: mb-0, text-muted, small */}
             <p className="mb-0 text-muted small">Max size: {maxSize}MB</p>
           </label>
         ) : (
-          // ✅ File selected - BOOTSTRAP CLASSES
+          //  File selected - BOOTSTRAP CLASSES
           <div>
-            {/* ✅ BOOTSTRAP: mb-3, rounded-3, border, border-2 */}
+            {/*  BOOTSTRAP: mb-3, rounded-3, border, border-2 */}
             {showPreview && value.type?.startsWith("image/") && (
               <img
                 src={value.base64}
@@ -150,12 +150,12 @@ const CustomFileUpload = ({
               />
             )}
 
-            {/* ✅ BOOTSTRAP: d-flex, align-items-center, justify-content-center, gap-2 */}
+            {/*  BOOTSTRAP: d-flex, align-items-center, justify-content-center, gap-2 */}
             <div className="d-flex align-items-center justify-content-center gap-2">
-              {/* ✅ BOOTSTRAP: mb-0, text-success, fs-6, fw-medium */}
+              {/*  BOOTSTRAP: mb-0, text-success, fs-6, fw-medium */}
               <p className="mb-0 text-success fs-6 fw-medium">✓ {value.name}</p>
 
-              {/* ✅ BOOTSTRAP: btn, btn-link, text-danger, p-0 */}
+              {/*  BOOTSTRAP: btn, btn-link, text-danger, p-0 */}
               {!disabled && (
                 <button
                   type="button"
@@ -168,7 +168,7 @@ const CustomFileUpload = ({
               )}
             </div>
 
-            {/* ✅ BOOTSTRAP: mt-1, mb-0, text-muted, small */}
+            {/*  BOOTSTRAP: mt-1, mb-0, text-muted, small */}
             <p className="mt-1 mb-0 text-muted small">
               {(value.size / 1024).toFixed(2)} KB
             </p>
@@ -176,7 +176,7 @@ const CustomFileUpload = ({
         )}
       </div>
 
-      {/* ✅ BOOTSTRAP: d-flex, align-items-center, gap-2, mt-2, text-danger, small, fw-medium */}
+      {/*  BOOTSTRAP: d-flex, align-items-center, gap-2, mt-2, text-danger, small, fw-medium */}
       {error && (
         <div className="d-flex align-items-center gap-2 mt-2 text-danger small fw-medium">
           <AlertCircle size={14} />
@@ -184,7 +184,7 @@ const CustomFileUpload = ({
         </div>
       )}
 
-      {/* ✅ CUSTOM CSS: Only for hover effect (Bootstrap doesn't have hover utilities) */}
+      {/*  CUSTOM CSS: Only for hover effect (Bootstrap doesn't have hover utilities) */}
       <style>{`
         .hover-border-primary:hover {
           border-color: #0d6efd !important;

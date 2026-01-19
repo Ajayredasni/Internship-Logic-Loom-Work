@@ -342,7 +342,7 @@ const FormMenuTableContent = () => {
     form,
     subFormId,
     fieldName,
-    fieldType
+    fieldType,
   ) => {
     const subFormData = form.subForms?.[subFormId];
     if (!subFormData) return "-";
@@ -361,11 +361,11 @@ const FormMenuTableContent = () => {
 
   const visibleFields = useMemo(
     () => selectedFormData?.form?.filter((f) => f.is_show_to_listing) || [],
-    [selectedFormData]
+    [selectedFormData],
   );
 
   const subFormConfigs = formDataStore.filter(
-    (f) => f.mainFormName === formId && !f.isMainForm
+    (f) => f.mainFormName === formId && !f.isMainForm,
   );
 
   const subFormFields = useMemo(() => {
@@ -400,7 +400,7 @@ const FormMenuTableContent = () => {
           row,
           field.subFormId,
           field.fieldName,
-          field.fieldType
+          field.fieldType,
         ),
     })),
   ];
@@ -461,7 +461,7 @@ const FormMenuTableContent = () => {
         for (let rowIdx = 0; rowIdx < maxRows; rowIdx++) {
           visibleSubFields.forEach((field) => {
             headers.push(
-              `${subForm.formName} Row${rowIdx + 1} - ${field.field_name}`
+              `${subForm.formName} Row${rowIdx + 1} - ${field.field_name}`,
             );
           });
         }
@@ -473,7 +473,7 @@ const FormMenuTableContent = () => {
         visibleFields.forEach((field) => {
           row[field.field_name] = getDisplayValue(
             form[field.field_name],
-            field.field_type
+            field.field_type,
           );
         });
 
@@ -484,8 +484,8 @@ const FormMenuTableContent = () => {
           const dataArray = Array.isArray(subData)
             ? subData
             : subData
-            ? [subData]
-            : [];
+              ? [subData]
+              : [];
 
           let maxRows = 1;
           selectedFormMenuArray.forEach((f) => {
@@ -503,7 +503,7 @@ const FormMenuTableContent = () => {
               }`;
               row[headerName] = getDisplayValue(
                 rowData[field.field_name],
-                field.field_type
+                field.field_type,
               );
             });
           }
@@ -534,13 +534,13 @@ const FormMenuTableContent = () => {
       showAlert(
         "success",
         "Exported!",
-        "Excel file has been downloaded successfully."
+        "Excel file has been downloaded successfully.",
       );
     } catch (error) {
       showAlert(
         "error",
         "Export Failed",
-        "Failed to export Excel file. Please try again."
+        "Failed to export Excel file. Please try again.",
       );
       console.error("Export error:", error);
     }
@@ -573,9 +573,9 @@ const FormMenuTableContent = () => {
         exportButtonText="Export Excel"
         showExportButton={true}
         emptyMessage="No entries available"
-        searchable={true} // ✅ ADDED: Enable search functionality
-        paginated={true} // ✅ ADDED: Enable pagination
-        defaultPageSize={10} // ✅ ADDED: Default 10 rows per page
+        searchable={true} //  ADDED: Enable search functionality
+        paginated={true} //  ADDED: Enable pagination
+        defaultPageSize={10} //  ADDED: Default 10 rows per page
       />
     </div>
   );

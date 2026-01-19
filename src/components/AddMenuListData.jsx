@@ -19,9 +19,9 @@ import Stepper from "./custom_component/Stepper";
 import CustomButton from "./custom_component/CustomButton";
 import CustomCard from "./custom_component/CustomCard";
 import CustomSelect from "./custom_component/CustomSelect";
-import CustomModal from "./custom_component/CustomModal";
-import CustomFileUpload from "./custom_component/CustomFileUpload"; // ✅ NEW: Add this line
-import CustomFilePreview from "./custom_component/CustomFilePreview"; // ✅ NEW: Add this line
+import CustomFileUpload from "./custom_component/CustomFileUpload";
+import CustomFilePreview from "./custom_component/CustomFilePreview";
+import CustomBadge from "./custom_component/CustomBadge";
 
 function AddMenuListData() {
   const { formId } = useParams();
@@ -66,7 +66,7 @@ function AddMenuListData() {
 
   const selectedForm = formDataStore.find((f) => f.formId === formId);
   const linkedSubForms = formDataStore.filter(
-    (f) => f.mainFormName === selectedForm?.formId
+    (f) => f.mainFormName === selectedForm?.formId,
   );
   const queryParams = new URLSearchParams(location.search);
   const editIndex = queryParams.get("editIndex");
@@ -111,7 +111,7 @@ function AddMenuListData() {
     value,
     setErrors,
     formObj,
-    errorKey
+    errorKey,
   ) => {
     const field = formObj?.find((f) => f.field_name === fieldName);
     if (!field || !field.validationRules?.length) {
@@ -125,7 +125,7 @@ function AddMenuListData() {
 
     const newErrors = {};
     const requireRule = field.validationRules.find(
-      (rule) => rule.type === "require" || rule.type === "required"
+      (rule) => rule.type === "require" || rule.type === "required",
     );
 
     if (field.field_type === "file") {
@@ -184,7 +184,7 @@ function AddMenuListData() {
         fieldName,
         updated[fieldName],
         setFieldErrors,
-        selectedForm.form
+        selectedForm.form,
       );
       return updated;
     });
@@ -231,7 +231,7 @@ function AddMenuListData() {
     subFormId,
     rowIndex,
     fieldName,
-    subForm
+    subForm,
   ) => {
     const { value } = e.target;
     setMultiModuleData((prev) => {
@@ -243,7 +243,7 @@ function AddMenuListData() {
         value,
         setMultiModuleErrors,
         subForm.form,
-        errorKey
+        errorKey,
       );
       return { ...prev, [subFormId]: rows };
     });
@@ -254,7 +254,7 @@ function AddMenuListData() {
     subFormId,
     rowIndex,
     fieldName,
-    subForm
+    subForm,
   ) => {
     const { value, checked } = e.target;
     setMultiModuleData((prev) => {
@@ -270,7 +270,7 @@ function AddMenuListData() {
         rows[rowIndex][fieldName],
         setMultiModuleErrors,
         subForm.form,
-        errorKey
+        errorKey,
       );
       return { ...prev, [subFormId]: rows };
     });
@@ -279,7 +279,7 @@ function AddMenuListData() {
     subFormId,
     rowIndex,
     fieldName,
-    fileData
+    fileData,
   ) => {
     const fileKey = `${subFormId}_${rowIndex}_${fieldName}`;
     setUploadedFiles((prev) => ({ ...prev, [fileKey]: fileData }));
@@ -292,7 +292,7 @@ function AddMenuListData() {
         fileData,
         setMultiModuleErrors,
         selectedForm.form,
-        errorKey
+        errorKey,
       );
       return { ...prev, [subFormId]: rows };
     });
@@ -309,7 +309,7 @@ function AddMenuListData() {
       if (!field.validationRules?.length) return;
 
       const requireRule = field.validationRules.find(
-        (rule) => rule.type === "require" || rule.type === "required"
+        (rule) => rule.type === "require" || rule.type === "required",
       );
 
       if (field.field_type === "file") {
@@ -352,7 +352,7 @@ function AddMenuListData() {
             subForm.form,
             row,
             setMultiModuleErrors,
-            prefix
+            prefix,
           );
           if (!isRowValid) allValid = false;
         });
@@ -372,7 +372,7 @@ function AddMenuListData() {
       showAlert(
         "error",
         "Validation Error",
-        "Please fill all required fields before proceeding"
+        "Please fill all required fields before proceeding",
       );
     }
   };
@@ -399,7 +399,7 @@ function AddMenuListData() {
       showAlert(
         "error",
         "Error",
-        "Please complete all steps before submitting"
+        "Please complete all steps before submitting",
       );
       return;
     }
@@ -409,7 +409,7 @@ function AddMenuListData() {
     const isMainValid = validateFields(
       selectedForm.form,
       formData,
-      setFieldErrors
+      setFieldErrors,
     );
     let allMultiModuleValid = true;
 
@@ -421,7 +421,7 @@ function AddMenuListData() {
           subForm.form,
           row,
           setMultiModuleErrors,
-          prefix
+          prefix,
         );
         if (!isRowValid) allMultiModuleValid = false;
       });
@@ -447,7 +447,7 @@ function AddMenuListData() {
             formId,
             index: Number(editIndex),
             updatedData: finalData,
-          })
+          }),
         );
         showAlert("success", "Updated!", "Form has been updated successfully!");
       } else {
@@ -463,12 +463,15 @@ function AddMenuListData() {
           updatedAt: timestamp,
         };
         dispatch(
-          formMenuAction.addFormDataToMenuStore({ formId, formData: finalData })
+          formMenuAction.addFormDataToMenuStore({
+            formId,
+            formData: finalData,
+          }),
         );
         showAlert(
           "success",
           "Submitted!",
-          "Form has been submitted successfully!"
+          "Form has been submitted successfully!",
         );
       }
       setTimeout(() => navigate(`/app/formMenu-Table/${formId}`), 1500);
@@ -476,7 +479,7 @@ function AddMenuListData() {
       showAlert(
         "error",
         "Validation Error",
-        "Please fill all required fields in Main Form & Multi-Modules."
+        "Please fill all required fields in Main Form & Multi-Modules.",
       );
     }
   };
@@ -489,7 +492,7 @@ function AddMenuListData() {
       .filter((field) => field.is_show_to_form)
       .map((field) => {
         const value = formData[field.field_name] ?? "";
-        // ✅ NEW CODE: Replace with CustomFileUpload + CustomFilePreview
+        //  NEW CODE: Replace with CustomFileUpload + CustomFilePreview
         if (field.field_type === "file") {
           const fileData =
             uploadedFiles[field.field_name] || formData[field.field_name];
@@ -502,7 +505,7 @@ function AddMenuListData() {
                 onChange={handleFileUpload}
                 error={fieldErrors[field.field_name]}
                 required={field.validationRules?.some(
-                  (r) => r.type === "required" || r.type === "require"
+                  (r) => r.type === "required" || r.type === "require",
                 )}
                 disabled={field.is_hidden}
               />
@@ -741,7 +744,7 @@ function AddMenuListData() {
                 placeholder={field.placeholder}
                 error={fieldErrors[field.field_name]}
                 required={field.validationRules?.some(
-                  (r) => r.type === "required" || r.type === "require"
+                  (r) => r.type === "required" || r.type === "require",
                 )}
                 searchable
                 clearable
@@ -881,12 +884,12 @@ function AddMenuListData() {
                                   subForm.formId,
                                   rowIndex,
                                   fieldName,
-                                  data
+                                  data,
                                 )
                               }
                               error={multiModuleErrors[errorKey]}
                               required={field.validationRules?.some(
-                                (r) => r.type === "required"
+                                (r) => r.type === "required",
                               )}
                               showPreview={false}
                             />
@@ -913,7 +916,7 @@ function AddMenuListData() {
                                     subForm.formId,
                                     rowIndex,
                                     field.field_name,
-                                    subForm
+                                    subForm,
                                   )
                                 }
                                 style={{ fontSize: "0.875rem" }}
@@ -941,7 +944,7 @@ function AddMenuListData() {
 
                       if (
                         ["text_box", "email", "number", "tel"].includes(
-                          field.field_type
+                          field.field_type,
                         )
                       ) {
                         return (
@@ -964,7 +967,7 @@ function AddMenuListData() {
                                   subForm.formId,
                                   rowIndex,
                                   field.field_name,
-                                  subForm
+                                  subForm,
                                 )
                               }
                               style={{ fontSize: "0.875rem" }}
@@ -994,7 +997,7 @@ function AddMenuListData() {
                                   subForm.formId,
                                   rowIndex,
                                   field.field_name,
-                                  subForm
+                                  subForm,
                                 )
                               }
                               rows="2"
@@ -1025,7 +1028,7 @@ function AddMenuListData() {
                                   subForm.formId,
                                   rowIndex,
                                   field.field_name,
-                                  subForm
+                                  subForm,
                                 )
                               }
                               style={{ fontSize: "0.875rem" }}
@@ -1062,7 +1065,7 @@ function AddMenuListData() {
                                         subForm.formId,
                                         rowIndex,
                                         field.field_name,
-                                        subForm
+                                        subForm,
                                       )
                                     }
                                     className="form-check-input"
@@ -1110,7 +1113,7 @@ function AddMenuListData() {
                                         subForm.formId,
                                         rowIndex,
                                         field.field_name,
-                                        subForm
+                                        subForm,
                                       )
                                     }
                                     className="form-check-input"
@@ -1148,7 +1151,7 @@ function AddMenuListData() {
                                   subForm.formId,
                                   rowIndex,
                                   field.field_name,
-                                  subForm
+                                  subForm,
                                 )
                               }
                               placeholder={field.placeholder}
@@ -1178,7 +1181,7 @@ function AddMenuListData() {
                       >
                         {(() => {
                           const fileFields = visibleFields.filter(
-                            (f) => f.field_type === "file"
+                            (f) => f.field_type === "file",
                           );
                           const filesInRow = fileFields
                             .map((f) => {
@@ -1258,10 +1261,65 @@ function AddMenuListData() {
             )}
           </div>
         );
-
       case 2:
         return (
           <div className="review-section">
+            {/* ✨ NEW: Form Information Card */}
+            <div
+              style={{
+                backgroundColor: "#f8f9fa",
+                padding: "20px",
+                borderRadius: "12px",
+                marginBottom: "20px",
+              }}
+            >
+              <h5 style={{ marginBottom: "16px", color: "#1e293b" }}>
+                Form Information
+              </h5>
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <strong style={{ color: "#64748b", fontSize: "12px" }}>
+                    Organization:
+                  </strong>
+                  <div style={{ color: "#1e293b", marginTop: "4px" }}>
+                    {selectedForm.organizationName || "-"}
+                  </div>
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong style={{ color: "#64748b", fontSize: "12px" }}>
+                    Form Name:
+                  </strong>
+                  <div style={{ color: "#1e293b", marginTop: "4px" }}>
+                    {selectedForm.formName || "-"}
+                  </div>
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong style={{ color: "#64748b", fontSize: "12px" }}>
+                    Form Type:
+                  </strong>
+                  <div style={{ color: "#1e293b", marginTop: "4px" }}>
+                    <CustomBadge variant="primary" size="sm">
+                      {selectedForm.formType || "-"}
+                    </CustomBadge>
+                  </div>
+                </div>
+                <div className="col-md-6 mb-3">
+                  <strong style={{ color: "#64748b", fontSize: "12px" }}>
+                    Status:
+                  </strong>
+                  <div style={{ color: "#1e293b", marginTop: "4px" }}>
+                    <CustomBadge
+                      variant={selectedForm.active ? "success" : "danger"}
+                      size="sm"
+                    >
+                      {selectedForm.active ? "Active" : "Inactive"}
+                    </CustomBadge>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Existing Main Form Data */}
             <div
               style={{
                 backgroundColor: "#f8f9fa",
@@ -1291,6 +1349,7 @@ function AddMenuListData() {
               </div>
             </div>
 
+            {/* Multi-Modules Data */}
             {linkedSubForms.length > 0 && (
               <div>
                 <h5 style={{ marginBottom: "16px", color: "#1e293b" }}>
@@ -1308,16 +1367,23 @@ function AddMenuListData() {
                         marginBottom: "16px",
                       }}
                     >
-                      <h6 style={{ marginBottom: "12px", color: "#4b5563" }}>
-                        {subForm.formName} ({rows.length} rows)
-                      </h6>
+                      {/* ✨ UPDATED: Badge in subform header */}
+                      <div className="d-flex align-items-center gap-2 mb-3">
+                        <h6 style={{ marginBottom: 0, color: "#4b5563" }}>
+                          {subForm.formName}
+                        </h6>
+                        <CustomBadge variant="info" size="sm" pill>
+                          {rows.length} {rows.length === 1 ? "row" : "rows"}
+                        </CustomBadge>
+                      </div>
+
                       {rows.length === 0 ? (
                         <p style={{ color: "#94a3b8", margin: 0 }}>
                           No data added
                         </p>
                       ) : (
                         <div style={{ fontSize: "14px", color: "#64748b" }}>
-                          {rows.length} row(s) added
+                          ✓ {rows.length} row(s) added successfully
                         </div>
                       )}
                     </div>
@@ -1327,7 +1393,6 @@ function AddMenuListData() {
             )}
           </div>
         );
-
       default:
         return null;
     }

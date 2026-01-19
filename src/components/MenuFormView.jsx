@@ -6,8 +6,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import CustomButton from "./custom_component/CustomButton";
 import CustomCard from "./custom_component/CustomCard";
-import CustomModal from "./custom_component/CustomModal";
-import CustomFilePreview from "./custom_component/CustomFilePreview"; // ✅ NEW: Add this line
+import CustomFilePreview from "./custom_component/CustomFilePreview";
+import CustomBadge from "./custom_component/CustomBadge";
 
 const MenuFormView = () => {
   const location = useLocation();
@@ -30,7 +30,7 @@ const MenuFormView = () => {
 
   const visibleFields = formData.form.filter((f) => f.is_show_to_view);
   const relatedSubForms = allForms.filter(
-    (f) => f.mainFormName === formData.formId && !f.isMainForm
+    (f) => f.mainFormName === formData.formId && !f.isMainForm,
   );
 
   const toggleSection = (sectionId) => {
@@ -68,11 +68,11 @@ const MenuFormView = () => {
     doc.setTextColor(100, 100, 100);
     doc.text(
       `Generated on: ${new Date().toLocaleDateString(
-        "en-IN"
+        "en-IN",
       )} at ${new Date().toLocaleTimeString("en-IN")}`,
       pageWidth / 2,
       yOffset,
-      { align: "center" }
+      { align: "center" },
     );
 
     yOffset += 10;
@@ -87,7 +87,7 @@ const MenuFormView = () => {
     doc.text(
       `${formData.formName || "Main Form"} - Complete Data`,
       20,
-      yOffset
+      yOffset,
     );
     yOffset += 15;
 
@@ -96,7 +96,7 @@ const MenuFormView = () => {
       fields,
       data,
       extraInfo = {},
-      isSubForm = false
+      isSubForm = false,
     ) => {
       if (yOffset > pageHeight - 80) {
         doc.addPage();
@@ -108,7 +108,7 @@ const MenuFormView = () => {
       doc.setTextColor(
         isSubForm ? 155 : 52,
         isSubForm ? 89 : 73,
-        isSubForm ? 182 : 94
+        isSubForm ? 182 : 94,
       );
       doc.text(title.toUpperCase(), 20, yOffset);
       yOffset += 5;
@@ -125,11 +125,11 @@ const MenuFormView = () => {
 
       fields.forEach((field) => {
         const fieldName = String(
-          field.label || field.field_name || "Unnamed Field"
+          field.label || field.field_name || "Unnamed Field",
         );
         const fieldValue = getDisplayValue(
           data[field.field_name],
-          field.field_type
+          field.field_type,
         );
         tableData.push([fieldName, fieldValue]);
       });
@@ -188,7 +188,7 @@ const MenuFormView = () => {
       visibleFields,
       entryData,
       mainExtraInfo,
-      false
+      false,
     );
 
     if (relatedSubForms.length > 0) {
@@ -234,7 +234,7 @@ const MenuFormView = () => {
           const rowData = [rowIdx + 1];
           visibleSubFields.forEach((field) => {
             rowData.push(
-              getDisplayValue(subFormRow[field.field_name], field.field_type)
+              getDisplayValue(subFormRow[field.field_name], field.field_type),
             );
           });
           tableData.push(rowData);
@@ -474,7 +474,7 @@ const MenuFormView = () => {
                     >
                       {getDisplayValue(
                         entryData[field.field_name],
-                        field.field_type
+                        field.field_type,
                       )}
                     </td>
                   </tr>
@@ -510,7 +510,7 @@ const MenuFormView = () => {
                 subFormConfig.form?.filter((f) => f.is_show_to_view) || [];
 
               const hasFileFields = visibleSubFields.some(
-                (f) => f.field_type === "file"
+                (f) => f.field_type === "file",
               );
 
               const sectionId = `subform-${idx}`;
@@ -536,7 +536,7 @@ const MenuFormView = () => {
                       borderBottom: isExpanded ? "1px solid #e2e8f0" : "none",
                     }}
                   >
-                    <div>
+                    {/* <div>
                       <h4
                         style={{
                           fontSize: "16px",
@@ -557,6 +557,22 @@ const MenuFormView = () => {
                         {dataArray.length}{" "}
                         {dataArray.length === 1 ? "row" : "rows"}
                       </p>
+                    </div> */}
+                    <div className="d-flex align-items-center gap-2">
+                      <h4
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          color: "#9b59b6",
+                          margin: 0,
+                        }}
+                      >
+                        {subFormConfig.formName}
+                      </h4>
+                      <CustomBadge variant="info" size="sm" pill>
+                        {dataArray.length}{" "}
+                        {dataArray.length === 1 ? "row" : "rows"}
+                      </CustomBadge>
                     </div>
                     {isExpanded ? (
                       <ChevronUp size={20} color="#64748b" />
@@ -631,11 +647,11 @@ const MenuFormView = () => {
                                   <td key={fIdx} style={tableCellStyle}>
                                     {getDisplayValue(
                                       rowData[field.field_name],
-                                      field.field_type
+                                      field.field_type,
                                     )}
                                   </td>
                                 ))}
-                                {/* // ✅ In Multi-Module table FILE PREVIEW section */}
+                                {/* //  In Multi-Module table FILE PREVIEW section */}
                                 {hasFileFields && (
                                   <td
                                     style={{
@@ -647,7 +663,7 @@ const MenuFormView = () => {
                                     {(() => {
                                       const fileFields =
                                         visibleSubFields.filter(
-                                          (f) => f.field_type === "file"
+                                          (f) => f.field_type === "file",
                                         );
                                       const filesInRow = fileFields
                                         .map((f) => rowData[f.field_name])
@@ -672,7 +688,7 @@ const MenuFormView = () => {
                                                 showModal={true}
                                                 showDownload={true}
                                               />
-                                            )
+                                            ),
                                           )}
                                         </div>
                                       );

@@ -4,6 +4,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import CustomButton from "./custom_component/CustomButton";
 import CustomCard from "./custom_component/CustomCard"; // ✨ NEW IMPORT
+import CustomBadge from "./custom_component/CustomBadge";
+
 
 const ViewForm = () => {
   const location = useLocation();
@@ -301,7 +303,11 @@ const ViewForm = () => {
                 </tr>
                 <tr>
                   <th style={thStyle}>Is Main Form</th>
-                  <td style={tdStyle}>{formData.isMainForm ? "Yes" : "No"}</td>
+                  <td style={tdStyle}>
+                     <CustomBadge variant={formData.isMainForm ? "info" : "secondary"} size="sm">
+                       {formData.isMainForm ? "Yes" : "No"}
+                     </CustomBadge>
+                  </td>
                 </tr>
                 <tr>
                   <th style={thStyle}>Description</th>
@@ -318,7 +324,10 @@ const ViewForm = () => {
                 <tr>
                   <th style={thStyle}>Status</th>
                   <td style={tdStyle}>
-                    {formData.active ? "Active" : "Inactive"}
+                    {/* use CustomBadge */}
+                    <CustomBadge variant={formData.active ? "success" : "danger"} size="sm">
+                      {formData.active ? "Active" : "Inactive"}
+                    </CustomBadge>
                   </td>
                 </tr>
                 <tr>
