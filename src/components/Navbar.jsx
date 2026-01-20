@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Home, LogOut, Menu, X, Bell } from "react-feather";
+import { Home, LogOut, Menu, X, Bell, User, Settings } from "react-feather";
 import { logout, selectUser, selectIsAuthenticated } from "./store/authSlice";
 import { formDataAction } from "./store/formDataStoreSlice";
 import { formMenuAction } from "./store/formMenuStoreSlice";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "./custom_component/CustomButton";
 import CustomBadge from "./custom_component/CustomBadge";
+import CustomTooltip from "./custom_component/CustomTooltip";
+import CustomDropdown from "./custom_component/CustomDropdown";
 
 function Navbar({ activeItem, setActiveItem }) {
   const navigate = useNavigate();
@@ -176,52 +178,62 @@ function Navbar({ activeItem, setActiveItem }) {
 
           {/*  BELL ICON - Notification Dropdown */}
           <div style={{ position: "relative" }}>
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                width: "40px",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                position: "relative",
-                boxShadow: "0 2px 8px rgba(102, 126, 234, 0.4)",
-                transition: "all 0.3s ease",
-                padding: "0",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.05)";
-                e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(102, 126, 234, 0.6)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow =
-                  "0 2px 8px rgba(102, 126, 234, 0.4)";
-              }}
+            <CustomTooltip
+              content={
+                unreadCount > 0
+                  ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
+                  : "No new notifications"
+              }
+              placement="bottom"
             >
-              <Bell size={20} />
-              {unreadCount > 0 && (
-                <CustomBadge
-                  variant="danger"
-                  size="xs"
-                  pill
-                  count={unreadCount}
-                  maxCount={99}
-                  style={{
-                    position: "absolute",
-                    top: "-4px",
-                    right: "-4px",
-                    border: "2px solid white",
-                  }}
-                />
-              )}
-            </button>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "40px",
+                  height: "40px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  position: "relative",
+                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.4)",
+                  transition: "all 0.3s ease",
+                  padding: "0",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.05)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(102, 126, 234, 0.6)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(102, 126, 234, 0.4)";
+                }}
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <CustomBadge
+                    variant="danger"
+                    size="xs"
+                    pill
+                    count={unreadCount}
+                    maxCount={99}
+                    style={{
+                      position: "absolute",
+                      top: "-4px",
+                      right: "-4px",
+                      border: "2px solid white",
+                    }}
+                  />
+                )}
+              </button>
+            </CustomTooltip>
 
             {/*  Notifications Dropdown */}
             {showNotifications && (
@@ -391,7 +403,7 @@ function Navbar({ activeItem, setActiveItem }) {
           </div>
 
           {/*  User Welcome - Redux Data */}
-          {currentUser && (
+          {/* {currentUser && (
             <div
               className="d-flex align-items-center gap-2 px-3 py-2 rounded-3"
               style={{
@@ -428,7 +440,6 @@ function Navbar({ activeItem, setActiveItem }) {
             </div>
           )}
 
-          {/*  Logout Button - Redux Action */}
           <CustomButton
             variant="danger"
             outline
@@ -437,7 +448,68 @@ function Navbar({ activeItem, setActiveItem }) {
             size="md"
           >
             Logout
-          </CustomButton>
+          </CustomButton> */}
+          {currentUser && (
+            <CustomDropdown
+              trigger={
+                <div className="d-flex align-items-center gap-2">
+                  <div
+                    className="rounded-circle d-flex align-items-center justify-content-center"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background:
+                        "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+                      color: "white",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {currentUser.firstName?.charAt(0)}
+                    {currentUser.lastName?.charAt(0)}
+                  </div>
+                  <div>
+                    <div
+                      className="text-dark fw-semibold"
+                      style={{ fontSize: "0.875rem", lineHeight: "1.2" }}
+                    >
+                      {currentUser.firstName} {currentUser.lastName}
+                    </div>
+                    <div className="text-muted" style={{ fontSize: "0.75rem" }}>
+                      Welcome back!
+                    </div>
+                  </div>
+                </div>
+              }
+              items={[
+                {
+                  label: "Profile",
+                  icon: <User size={16} />,
+                  onClick: () => console.log("Profile clicked"),
+                },
+                {
+                  label: "Settings",
+                  icon: <Settings size={16} />,
+                  onClick: () => console.log("Settings clicked"),
+                },
+                { divider: true },
+                {
+                  label: "Logout",
+                  icon: <LogOut size={16} />,
+                  onClick: handleLogout,
+                  variant: "danger",
+                },
+              ]}
+              placement="bottom-end"
+              triggerVariant="light"
+              showIcon={false}
+              style={{
+                backgroundColor: "#f1f5f9",
+                border: "1px solid #e2e8f0",
+                padding: "8px 12px",
+              }}
+            />
+          )}
         </div>
       </nav>
 

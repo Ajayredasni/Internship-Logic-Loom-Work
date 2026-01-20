@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { FileText, Download, Maximize2 } from "react-feather";
 import CustomModal from "./CustomModal";
+import CustomTooltip from "./CustomTooltip";
 
 /**
  * CustomFilePreview Component - Pure Bootstrap Version
@@ -185,11 +186,16 @@ const CustomFilePreview = ({
                     objectFit: "cover",
                   }}
                 />
-                {/* BOOTSTRAP: position-absolute, top-0, end-0, m-1, bg-dark, bg-opacity-75, rounded-2, p-1 */}
+
                 {showModal && (
-                  <div className="position-absolute top-0 end-0 m-1 bg-dark bg-opacity-75 rounded-2 p-1">
-                    <Maximize2 size={14} className="text-white" />
-                  </div>
+                  <CustomTooltip
+                    content="Click to view full size"
+                    placement="left"
+                  >
+                    <div className="position-absolute top-0 end-0 m-1 bg-dark bg-opacity-75 rounded-2 p-1">
+                      <Maximize2 size={14} className="text-white" />
+                    </div>
+                  </CustomTooltip>
                 )}
               </div>
             ) : fileData.type === "application/pdf" ? (
@@ -237,16 +243,17 @@ const CustomFilePreview = ({
             </p>
           </div>
 
-          {/*  BOOTSTRAP: btn, btn-primary, btn-sm, d-flex, align-items-center, gap-2 */}
           {showDownload && (
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="btn btn-primary btn-sm d-flex align-items-center gap-2 file-download-btn"
-            >
-              <Download size={14} />
-              Download
-            </button>
+            <CustomTooltip content="Download this file" placement="top">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="btn btn-primary btn-sm d-flex align-items-center gap-2"
+              >
+                <Download size={14} />
+                Download
+              </button>
+            </CustomTooltip>
           )}
         </div>
       </div>

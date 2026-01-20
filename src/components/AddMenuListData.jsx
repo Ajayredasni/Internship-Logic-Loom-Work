@@ -22,6 +22,7 @@ import CustomSelect from "./custom_component/CustomSelect";
 import CustomFileUpload from "./custom_component/CustomFileUpload";
 import CustomFilePreview from "./custom_component/CustomFilePreview";
 import CustomBadge from "./custom_component/CustomBadge";
+import CustomTooltip from "./custom_component/CustomTooltip";
 
 function AddMenuListData() {
   const { formId } = useParams();
@@ -498,6 +499,23 @@ function AddMenuListData() {
             uploadedFiles[field.field_name] || formData[field.field_name];
           return (
             <div key={field.field_name} className="mb-3 col-md-6">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <label className="form-label fw-semibold mb-0">
+                  {field.label}
+                  {field.validationRules?.some(
+                    (r) => r.type === "required",
+                  ) && <span style={{ color: "#dc2626" }}> *</span>}
+                </label>
+                <CustomTooltip
+                  content="Max size: 2MB. Supported: Images, PDF, Excel"
+                  placement="right"
+                >
+                  <Info
+                    size={14}
+                    style={{ color: "#94a3b8", cursor: "help" }}
+                  />
+                </CustomTooltip>
+              </div>
               <CustomFileUpload
                 name={field.field_name}
                 label={field.label}
@@ -868,7 +886,7 @@ function AddMenuListData() {
                       const fileKey = `${subForm.formId}_${rowIndex}_${field.field_name}`;
                       const fileData =
                         uploadedFiles[fileKey] || row[field.field_name];
-                      // ✅ NEW CODE: Replace with CustomFileUpload (no preview variant)
+                      //  NEW CODE: Replace with CustomFileUpload (no preview variant)
                       if (field.field_type === "file") {
                         return (
                           <td

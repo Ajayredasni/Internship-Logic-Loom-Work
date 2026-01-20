@@ -11,6 +11,7 @@ import CustomButton from "./custom_component/CustomButton";
 import CustomSelect from "./custom_component/CustomSelect";
 import CustomModal from "./custom_component/CustomModal";
 import CustomBadge from "./custom_component/CustomBadge";
+import CustomTooltip from "./custom_component/CustomTooltip";
 import "./AddForm.css";
 
 import {
@@ -22,6 +23,7 @@ import {
   Check,
   ArrowLeft,
   ArrowRight,
+  Info,
 } from "react-feather";
 
 // Import icons for the basic components
@@ -1282,16 +1284,27 @@ const AddForm = () => {
               <div className="cards-container">
                 <div className="card">
                   <div className="card-content">
-                    <ToggleButton
-                      isOn={fieldConfig.is_show_to_listing}
-                      onToggle={() =>
-                        setFieldConfig({
-                          ...fieldConfig,
-                          is_show_to_listing: !fieldConfig.is_show_to_listing,
-                        })
-                      }
-                      label="Show in Listing"
-                    />
+                    <div className="d-flex align-items-center gap-2">
+                      <ToggleButton
+                        isOn={fieldConfig.is_show_to_listing}
+                        onToggle={() =>
+                          setFieldConfig({
+                            ...fieldConfig,
+                            is_show_to_listing: !fieldConfig.is_show_to_listing,
+                          })
+                        }
+                        label="Show in Listing"
+                      />
+                      <CustomTooltip
+                        content="Display this field as a column in data tables"
+                        placement="right"
+                      >
+                        <Info
+                          size={14}
+                          style={{ color: "#94a3b8", cursor: "help" }}
+                        />
+                      </CustomTooltip>
+                    </div>
                     <div className="form-group">
                       <label>Listing Value Path</label>
                       <input
@@ -1305,51 +1318,83 @@ const AddForm = () => {
 
                 <div className="card">
                   <div className="card-content">
-                    <ToggleButton
-                      isOn={fieldConfig.is_show_to_form}
-                      onToggle={() =>
-                        setFieldConfig({
-                          ...fieldConfig,
-                          is_show_to_form: !fieldConfig.is_show_to_form,
-                        })
-                      }
-                      label="Show in Form"
-                    />
-                    <ToggleButton
-                      isOn={fieldConfig.is_active}
-                      onToggle={() =>
-                        setFieldConfig({
-                          ...fieldConfig,
-                          is_active: !fieldConfig.is_active,
-                        })
-                      }
-                      label="Active"
-                    />
-                    <ToggleButton
-                      isOn={fieldConfig.is_hidden}
-                      onToggle={() =>
-                        setFieldConfig({
-                          ...fieldConfig,
-                          is_hidden: !fieldConfig.is_hidden,
-                        })
-                      }
-                      label="Hidden"
-                    />
+                    <div className="d-flex align-items-center gap-2">
+                      <ToggleButton
+                        isOn={fieldConfig.is_show_to_form}
+                        onToggle={() =>
+                          setFieldConfig({
+                            ...fieldConfig,
+                            is_show_to_form: !fieldConfig.is_show_to_form,
+                          })
+                        }
+                        label="Show in Form"
+                      />
+                      <CustomTooltip
+                        content="Show this field in forms"
+                        placement="right"
+                      >
+                        <Info size={14} style={{ color: "#94a3b8" }} />
+                      </CustomTooltip>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <ToggleButton
+                        isOn={fieldConfig.is_active}
+                        onToggle={() =>
+                          setFieldConfig({
+                            ...fieldConfig,
+                            is_active: !fieldConfig.is_active,
+                          })
+                        }
+                        label="Active"
+                      />
+                      <CustomTooltip
+                        content="Enable or disable this field globally"
+                        placement="right"
+                      >
+                        <Info size={14} style={{ color: "#94a3b8" }} />
+                      </CustomTooltip>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <ToggleButton
+                        isOn={fieldConfig.is_hidden}
+                        onToggle={() =>
+                          setFieldConfig({
+                            ...fieldConfig,
+                            is_hidden: !fieldConfig.is_hidden,
+                          })
+                        }
+                        label="Hidden"
+                      />
+                      <CustomTooltip
+                        content="Hide field but still store its value"
+                        placement="right"
+                      >
+                        <Info size={14} style={{ color: "#94a3b8" }} />
+                      </CustomTooltip>
+                    </div>
                   </div>
                 </div>
 
                 <div className="card">
                   <div className="card-content">
-                    <ToggleButton
-                      isOn={fieldConfig.is_show_to_view}
-                      onToggle={() =>
-                        setFieldConfig({
-                          ...fieldConfig,
-                          is_show_to_view: !fieldConfig.is_show_to_view,
-                        })
-                      }
-                      label="Show in View"
-                    />
+                    <div className="d-flex align-items-center gap-2">
+                      <ToggleButton
+                        isOn={fieldConfig.is_show_to_view}
+                        onToggle={() =>
+                          setFieldConfig({
+                            ...fieldConfig,
+                            is_show_to_view: !fieldConfig.is_show_to_view,
+                          })
+                        }
+                        label="Show in View"
+                      />
+                      <CustomTooltip
+                        content="Display this field in view/details page"
+                        placement="right"
+                      >
+                        <Info size={14} style={{ color: "#94a3b8" }} />
+                      </CustomTooltip>
+                    </div>
                     <div className="form-group">
                       <label>View Value Path</label>
                       <input

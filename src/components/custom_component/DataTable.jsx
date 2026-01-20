@@ -12,6 +12,7 @@ import {
 import CustomButton from "./CustomButton";
 import CustomPagination from "./CustomPagination";
 import CustomBadge from "./CustomBadge";
+import CustomTooltip from "./CustomTooltip";
 
 /**
  * Advanced DataTable Component with Search & Pagination
@@ -131,16 +132,6 @@ const DataTable = ({
               <Grid size={24} color="white" />
             </div>
             <div>
-              {/* <h2
-                style={{
-                  margin: 0,
-                  fontSize: "1.5rem",
-                  fontWeight: "700",
-                  color: "#1e293b",
-                }}
-              >
-                {title}
-              </h2> */}
               <div className="d-flex align-items-center gap-2">
                 <h2
                   style={{
@@ -392,51 +383,63 @@ const DataTable = ({
                             }}
                           >
                             {onEdit && (
-                              <CustomButton
-                                variant="warning"
-                                outline
-                                size="sm"
-                                icon={<Edit2 size={16} />}
-                                onClick={() => onEdit(row, actualIndex)}
-                                title="Edit"
-                                style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  padding: "0",
-                                }}
-                              />
+                              <CustomTooltip
+                                content="Edit this entry"
+                                placement="top"
+                              >
+                                <CustomButton
+                                  variant="warning"
+                                  outline
+                                  size="sm"
+                                  icon={<Edit2 size={16} />}
+                                  onClick={() => onEdit(row, actualIndex)}
+                                  style={{
+                                    width: "36px",
+                                    height: "36px",
+                                    padding: "0",
+                                  }}
+                                />
+                              </CustomTooltip>
                             )}
 
                             {onView && (
-                              <CustomButton
-                                variant="info"
-                                outline
-                                size="sm"
-                                icon={<Eye size={16} />}
-                                onClick={() => onView(row, actualIndex)}
-                                title="View"
-                                style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  padding: "0",
-                                }}
-                              />
+                              <CustomTooltip
+                                content="View details"
+                                placement="top"
+                              >
+                                <CustomButton
+                                  variant="info"
+                                  outline
+                                  size="sm"
+                                  icon={<Eye size={16} />}
+                                  onClick={() => onView(row, actualIndex)}
+                                  style={{
+                                    width: "36px",
+                                    height: "36px",
+                                    padding: "0",
+                                  }}
+                                />
+                              </CustomTooltip>
                             )}
 
                             {onDelete && (
-                              <CustomButton
-                                variant="danger"
-                                outline
-                                size="sm"
-                                icon={<Trash2 size={16} />}
-                                onClick={() => onDelete(row, actualIndex)}
-                                title="Delete"
-                                style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  padding: "0",
-                                }}
-                              />
+                              <CustomTooltip
+                                content="Delete this entry"
+                                placement="top"
+                              >
+                                <CustomButton
+                                  variant="danger"
+                                  outline
+                                  size="sm"
+                                  icon={<Trash2 size={16} />}
+                                  onClick={() => onDelete(row, actualIndex)}
+                                  style={{
+                                    width: "36px",
+                                    height: "36px",
+                                    padding: "0",
+                                  }}
+                                />
+                              </CustomTooltip>
                             )}
                           </div>
                         </td>
