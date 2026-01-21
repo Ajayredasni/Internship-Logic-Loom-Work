@@ -12,6 +12,7 @@ import CustomSelect from "./custom_component/CustomSelect";
 import CustomModal from "./custom_component/CustomModal";
 import CustomBadge from "./custom_component/CustomBadge";
 import CustomTooltip from "./custom_component/CustomTooltip";
+import CustomToggleSwitch from "./custom_component/CustomToggleSwitch";
 import "./AddForm.css";
 
 import {
@@ -660,19 +661,6 @@ const AddForm = () => {
     setTimeout(() => navigate("/app"), 1500);
   };
 
-  // Toggle button component
-  const ToggleButton = ({ isOn, onToggle, label }) => (
-    <div className="toggle-group">
-      <span className="toggle-label">{label}</span>
-      <div
-        className={`toggle-button ${isOn ? "on" : "off"}`}
-        onClick={onToggle}
-      >
-        <div className="toggle-switch"></div>
-      </div>
-    </div>
-  );
-
   // ✨ RENDER STEP CONTENT
   const renderStepContent = () => {
     switch (currentStep) {
@@ -827,22 +815,20 @@ const AddForm = () => {
                   />
                 </div>
               )}
-
-              <div className="form-group full-width toggle-group">
-                <span className="toggle-label">Status</span>
-                <div
-                  className={`toggle-button ${
-                    formDetails.active ? "on" : "off"
-                  }`}
-                  onClick={() =>
+              <div className="form-group full-width">
+                <CustomToggleSwitch
+                  checked={formDetails.active}
+                  onChange={(checked) =>
                     setFormDetails({
                       ...formDetails,
-                      active: !formDetails.active,
+                      active: checked,
                     })
                   }
-                >
-                  <div className="toggle-switch"></div>
-                </div>
+                  label="Status"
+                  labelPosition="left"
+                  size="md"
+                  onColor="success"
+                />
               </div>
             </div>
           </div>
@@ -904,6 +890,7 @@ const AddForm = () => {
                         <div className="dropped-item-actions">
                           <CustomButton
                             variant="warning"
+                            outline
                             size="sm"
                             icon={<Edit size={14} />}
                             onClick={() => editField(f, idx)}
@@ -916,6 +903,7 @@ const AddForm = () => {
                           />
                           <CustomButton
                             variant="danger"
+                            outline
                             size="sm"
                             icon={<Trash2 size={14} />}
                             onClick={() => deleteField(idx)}
@@ -1285,15 +1273,17 @@ const AddForm = () => {
                 <div className="card">
                   <div className="card-content">
                     <div className="d-flex align-items-center gap-2">
-                      <ToggleButton
-                        isOn={fieldConfig.is_show_to_listing}
-                        onToggle={() =>
+                      <CustomToggleSwitch
+                        checked={fieldConfig.is_show_to_listing}
+                        onChange={(checked) =>
                           setFieldConfig({
                             ...fieldConfig,
-                            is_show_to_listing: !fieldConfig.is_show_to_listing,
+                            is_show_to_listing: checked,
                           })
                         }
                         label="Show in Listing"
+                        size="md"
+                        onColor="primary"
                       />
                       <CustomTooltip
                         content="Display this field as a column in data tables"
@@ -1319,15 +1309,17 @@ const AddForm = () => {
                 <div className="card">
                   <div className="card-content">
                     <div className="d-flex align-items-center gap-2">
-                      <ToggleButton
-                        isOn={fieldConfig.is_show_to_form}
-                        onToggle={() =>
+                      <CustomToggleSwitch
+                        checked={fieldConfig.is_show_to_form}
+                        onChange={(checked) =>
                           setFieldConfig({
                             ...fieldConfig,
-                            is_show_to_form: !fieldConfig.is_show_to_form,
+                            is_show_to_form: checked,
                           })
                         }
                         label="Show in Form"
+                        size="md"
+                        onColor="primary"
                       />
                       <CustomTooltip
                         content="Show this field in forms"
@@ -1337,15 +1329,17 @@ const AddForm = () => {
                       </CustomTooltip>
                     </div>
                     <div className="d-flex align-items-center gap-2">
-                      <ToggleButton
-                        isOn={fieldConfig.is_active}
-                        onToggle={() =>
+                      <CustomToggleSwitch
+                        checked={fieldConfig.is_active}
+                        onChange={(checked) =>
                           setFieldConfig({
                             ...fieldConfig,
-                            is_active: !fieldConfig.is_active,
+                            is_active: checked,
                           })
                         }
                         label="Active"
+                        size="md"
+                        onColor="success"
                       />
                       <CustomTooltip
                         content="Enable or disable this field globally"
@@ -1355,15 +1349,17 @@ const AddForm = () => {
                       </CustomTooltip>
                     </div>
                     <div className="d-flex align-items-center gap-2">
-                      <ToggleButton
-                        isOn={fieldConfig.is_hidden}
-                        onToggle={() =>
+                      <CustomToggleSwitch
+                        checked={fieldConfig.is_hidden}
+                        onChange={(checked) =>
                           setFieldConfig({
                             ...fieldConfig,
-                            is_hidden: !fieldConfig.is_hidden,
+                            is_hidden: checked,
                           })
                         }
                         label="Hidden"
+                        size="md"
+                        onColor="warning"
                       />
                       <CustomTooltip
                         content="Hide field but still store its value"
@@ -1378,15 +1374,17 @@ const AddForm = () => {
                 <div className="card">
                   <div className="card-content">
                     <div className="d-flex align-items-center gap-2">
-                      <ToggleButton
-                        isOn={fieldConfig.is_show_to_view}
-                        onToggle={() =>
+                      <CustomToggleSwitch
+                        checked={fieldConfig.is_show_to_view}
+                        onChange={(checked) =>
                           setFieldConfig({
                             ...fieldConfig,
-                            is_show_to_view: !fieldConfig.is_show_to_view,
+                            is_show_to_view: checked,
                           })
                         }
                         label="Show in View"
+                        size="md"
+                        onColor="primary"
                       />
                       <CustomTooltip
                         content="Display this field in view/details page"
@@ -1413,30 +1411,20 @@ const AddForm = () => {
           {activeTab === "constraint" && (
             <div className="modal-section">
               <h5 className="section-title">Validation</h5>
-
-              <div
-                className="toggle-group toggle-validation"
-                style={{
-                  marginBottom: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span className="toggle-label">Enable Validation</span>
-                <label className="switch">
-                  <input
-                    type="checkbox"
-                    checked={fieldConfig.Validation}
-                    onChange={(e) =>
-                      setFieldConfig({
-                        ...fieldConfig,
-                        Validation: e.target.checked,
-                      })
-                    }
-                  />
-                  <span className="slider round"></span>
-                </label>
+              <div style={{ marginBottom: "20px" }}>
+                <CustomToggleSwitch
+                  checked={fieldConfig.Validation}
+                  onChange={(checked) =>
+                    setFieldConfig({
+                      ...fieldConfig,
+                      Validation: checked,
+                    })
+                  }
+                  label="Enable Validation"
+                  labelPosition="left"
+                  size="md"
+                  onColor="success"
+                />
               </div>
 
               {fieldConfig.Validation && (
@@ -1604,6 +1592,7 @@ const AddForm = () => {
                           <>
                             <CustomButton
                               variant="success"
+                              outline
                               size="sm"
                               icon={<Check size={14} />}
                               onClick={() => {
@@ -1641,6 +1630,7 @@ const AddForm = () => {
                             />
                             <CustomButton
                               variant="danger"
+                              outline
                               size="sm"
                               icon={<X size={14} />}
                               onClick={() => {
@@ -1663,6 +1653,7 @@ const AddForm = () => {
                           <>
                             <CustomButton
                               variant="warning"
+                              outline
                               size="sm"
                               icon={<Edit size={14} />}
                               onClick={() => {
@@ -1680,6 +1671,7 @@ const AddForm = () => {
                             />
                             <CustomButton
                               variant="danger"
+                              outline
                               size="sm"
                               icon={<Trash2 size={14} />}
                               onClick={() => {
@@ -1810,6 +1802,7 @@ const AddForm = () => {
                     >
                       <CustomButton
                         variant="success"
+                        outline
                         size="sm"
                         icon={<PlusCircle size={16} />}
                         onClick={addValidationRule}
@@ -1961,6 +1954,7 @@ const AddForm = () => {
                           <>
                             <CustomButton
                               variant="success"
+                              outline
                               size="sm"
                               icon={<Check size={14} />}
                               onClick={() => {
@@ -2013,6 +2007,7 @@ const AddForm = () => {
                             />
                             <CustomButton
                               variant="danger"
+                              outline
                               size="sm"
                               icon={<X size={14} />}
                               onClick={() => {
@@ -2036,6 +2031,7 @@ const AddForm = () => {
                           <>
                             <CustomButton
                               variant="warning"
+                              outline
                               size="sm"
                               icon={<Edit size={14} />}
                               onClick={() => {
@@ -2053,6 +2049,7 @@ const AddForm = () => {
                             />
                             <CustomButton
                               variant="danger"
+                              outline
                               size="sm"
                               icon={<Trash2 size={14} />}
                               onClick={() => deleteOption(idx)}
@@ -2140,6 +2137,7 @@ const AddForm = () => {
                     >
                       <CustomButton
                         variant="success"
+                        outline
                         size="sm"
                         icon={<PlusCircle size={16} />}
                         onClick={addNewOption}

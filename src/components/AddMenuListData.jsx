@@ -1188,7 +1188,7 @@ function AddMenuListData() {
                         </td>
                       );
                     })}
-                    {/*  ✅ NEW CODE: Replace with CustomFilePreview (thumbnail variant) */}
+                    {/*   NEW CODE: Replace with CustomFilePreview (thumbnail variant) */}
                     {hasFileFields && (
                       <td
                         style={{
@@ -1229,21 +1229,31 @@ function AddMenuListData() {
                         })()}
                       </td>
                     )}
-                    <td style={{ padding: "8px", textAlign: "center" }}>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger d-flex align-items-center justify-content-center mx-auto"
+                    <td
+                      style={{
+                        padding: "8px",
+                        textAlign: "center",
+                        position: "relative",
+                      }}
+                    >
+                      <CustomButton
+                        variant="danger"
+                        outline
+                        size="sm"
+                        icon={<Trash2 size={16} />}
                         onClick={() =>
                           deleteMultiModuleRow(subForm.formId, rowIndex)
                         }
                         style={{
                           width: "36px",
                           height: "36px",
-                          borderRadius: "6px",
+                          padding: "0px",
+                          position: "absolute",
+                          left: "50%",
+                          top: "50%",
+                          transform: "translate(-50%, -50%)",
                         }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      />
                     </td>
                   </tr>
                 ))
